@@ -1,4 +1,3 @@
-var auto = require('autocomplete-element');
 var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
@@ -212,7 +211,7 @@ var updateDownloadURL = function () {
         };
         req.send(null);
     }
-}
+};
 
 
 var updateChecklist = function () {
@@ -257,25 +256,24 @@ var getDataFilter = function () {
         dataFilter = JSON.parse(occurrences.getAttribute('data-filter'));
     }
     return dataFilter;
-}
+};
 
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
     document.querySelector('#checklist').setAttribute('data-filter', dataFilterString);
     document.location.hash = queryString.stringify(dataFilter);
-}
+};
 
 function collectSelectors(selector) {
     var filterElems = Array.prototype.slice.call(document.querySelectorAll(selector));
 
-    var filterJoin = filterElems.reduce(function (filterAgg, filterElem) {
+    return filterElems.reduce(function (filterAgg, filterElem) {
         var taxonName = filterElem.textContent.trim();
         if (taxonName.length > 0) {
             filterAgg = filterAgg.concat(filterElem.textContent.trim());
         }
         return filterAgg;
     }, []).join(',');
-    return filterJoin;
 }
 
 function updateTaxonSelector() {
@@ -317,7 +315,7 @@ var updateBBox = function (areaSelect) {
     dataFilter.height = areaSelect._height;
 
     setDataFilter(dataFilter);
-}
+};
 
 var init = function () {
     var addRequestHandler = function (buttonId) {
@@ -325,7 +323,7 @@ var init = function () {
         checklistButton.addEventListener('click', function (event) {
             updateChecklist();
         }, false);
-    }
+    };
 
     clearChecklist();
     ['#requestChecklist', '#refreshChecklist'].forEach(function (id) {
@@ -356,19 +354,19 @@ var init = function () {
         taxonDiv.appendChild(taxonNameSpan);
         document.querySelector('#taxonFilter').appendChild(taxonDiv);
         updateTaxonSelector();
-    }
+    };
 
-    var addTraitFilterElement = function(traitFilter) {
+    var addTraitFilterElement = function (traitFilter) {
         var traitFilterElement = document.createElement('div');
-        
+
         var removeTraitButton = document.createElement('button');
         removeTraitButton.textContent = 'x';
-        removeTraitButton.addEventListener('click', function(event) {
-          traitFilterElement.parentNode.removeChild(traitFilterElement);
-          updateTraitSelector();
+        removeTraitButton.addEventListener('click', function (event) {
+            traitFilterElement.parentNode.removeChild(traitFilterElement);
+            updateTraitSelector();
         });
         traitFilterElement.appendChild(removeTraitButton);
-        
+
         var traitFilterText = document.createElement('span');
         traitFilterText.setAttribute('class', 'traitFilterElement');
         traitFilterText.textContent = traitFilter;
@@ -404,60 +402,65 @@ var init = function () {
     var taxonFilterNames = (dataFilter.scientificName && dataFilter.scientificName.split(',')) || ['Aves', 'Insecta'];
 
     taxonFilterNames.forEach(function (taxonName) {
-      addTaxonFilterElement(taxonName);
+        addTaxonFilterElement(taxonName);
     });
 
-    var traitFilters = (dataFilter.traitSelector && dataFilter.traitSelector.split(',')) || ['bodyMass greaterThan 10 g', 'bodyMass lessThan 1.0 kg'];
-    traitFilters.forEach(function(traitFilter) {
-      addTraitFilterElement(traitFilter);
+    var traitFilters = (dataFilter.traitSelector && dataFilter.traitSelector.split(',')) || ['bodyMass > 10 g', 'bodyMass < 1.0 kg'];
+    traitFilters.forEach(function (traitFilter) {
+        addTraitFilterElement(traitFilter);
     });
 
     var addTraitButton = document.getElementById('addTraitSelector');
     if (addTraitButton) {
-      addTraitButton.addEventListener('click', function(event) {
-        var traitSelectorInput = document.getElementById('traitSelector');
-        var traitFilterText = traitSelectorInput.value;
-        addTraitFilterElement(traitSelectorInput.value);
-        traitSelectorInput.value = '';
-      });
+        addTraitButton.addEventListener('click', function (event) {
+            var traitSelectorInput = document.getElementById('traitSelector');
+            addTraitFilterElement(traitSelectorInput.value);
+            traitSelectorInput.value = '';
+        });
 
     }
 
-    var nameInput = document.getElementById('scientificName');
+    var addTaxonButton = document.getElementById('addTaxonSelector');
 
-    nameInput.onkeyup = function (event) {
+    function addAndUpdateTaxonSelector(taxonName, taxonSelectorInput) {
+        addTaxonFilterElement(taxonName);
+        updateLists();
+        taxonSelectorInput.value = '';
+        removeChildren('#suggestions');
+    }
+
+    if (addTaxonButton) {
+        addTaxonButton.addEventListener('click', function (event) {
+            var taxonSelectorInput = document.getElementById('taxonSelectorInput');
+            addAndUpdateTaxonSelector(taxonSelectorInput.value, taxonSelectorInput);
+        });
+
+    }
+
+    var taxonSelectorInput = document.getElementById('taxonSelectorInput');
+
+    taxonSelectorInput.onkeyup = function (event) {
         var suggestions = removeChildren('#suggestions');
 
-        if (nameInput.value.length > 0) {
+        if (taxonSelectorInput.value.length > 2) {
             var closeMatchCallback = function (closeMatches) {
-                var instructions = document.createElement('div');
-                instructions.textContent = 'click any button below to add taxon to selector';
-                suggestions.appendChild(instructions);
-                function addTaxonButton(taxonLabel, scientificName, suggestion) {
-                    var addTaxonButton = document.createElement('button');
-                    addTaxonButton.addEventListener('click', function (event) {
-                        addTaxonFilterElement(scientificName.trim());
-                        updateLists();
-                    }, false);
-                    addTaxonButton.textContent = taxonLabel;
-                    suggestion.appendChild(addTaxonButton);
-                }
-
                 closeMatches.forEach(function (closeMatch) {
-                    var suggestion = document.createElement('div');
-                    suggestion.setAttribute('class', 'suggestion');
-                    suggestion.setAttribute('data-suggestion', closeMatch);
-                    if (closeMatch.commonNames.en) {
-                        addTaxonButton(closeMatch.commonNames.en, closeMatch.scientificName, suggestion);
+                    var label = closeMatch.scientificName;
+                    if (label.split(" ").length > 1) {
+                        label = '<em>' + label + '</em>'
                     }
-                    closeMatch.path.forEach(function (pathElem) {
-                        addTaxonButton(pathElem, pathElem, suggestion);
+                    if (closeMatch.commonNames.en) {
+                        label = closeMatch.commonNames.en + " (" + label + ")";
+                    }
+                    var child = document.createElement('li');
+                    child.innerHTML = label;
+                    child.addEventListener('click', function (event) {
+                        addAndUpdateTaxonSelector(closeMatch.scientificName.trim(), taxonSelectorInput);
                     });
-
-                    suggestions.appendChild(suggestion);
+                    suggestions.appendChild(child);
                 });
             };
-            globiData.findCloseTaxonMatches(nameInput.value.trim(), closeMatchCallback);
+            globiData.findCloseTaxonMatches(taxonSelectorInput.value.trim(), closeMatchCallback);
         }
     };
 

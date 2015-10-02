@@ -1,0 +1,25 @@
+#suggestions {
+    list-style:none;
+    position:relative;
+    z-index:5;
+
+}
+#suggestions li{
+    /*margin-right:3px;*/
+}
+
+#suggestions ul {
+    background: #fff; /* Adding a background makes the dropdown work properly in IE7+. Make this as close to your page's background as possible (i.e. white page == white background). */
+    background: rgba(255, 255, 255, 0); /* But! Let's make the background fully transparent where we can, we don't actually want to see it if we can help it... */
+    list-style: none;
+    /*position: absolute;*/
+    left: -9999px; /* Hide off-screen when not needed (this is more accessible than display:none;) */
+    display: block;
+    float: left;
+    top: -10em;
+}
+
+#suggestions li:hover { /* Here we define the most explicit hover states--what happens when you hover each individual link. */
+    text-decoration: underline;
+    cursor: pointer;
+}
