@@ -469,6 +469,7 @@ var init = function () {
     updateTraitSelector();
     updateBBox(areaSelect);
     updateLists();
+    updateChecklist();
 }
 
 window.addEventListener('load', function () {
