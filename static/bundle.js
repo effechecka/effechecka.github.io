@@ -197,10 +197,11 @@ var updateDownloadURL = function () {
                     if (resp.items) {
                         var csvString = resp.items.reduce(function (agg, item) {
                             if (item.taxon && item.recordcount) {
-                                agg = agg.concat([item.taxon, item.recordcount].join(','));
+                                var taxonName = item.taxon.split('|').reverse()[0];
+                                agg = agg.concat([taxonName, item.taxon, item.recordcount].join(','));
                             }
                             return agg;
-                        }, ['taxon path,record count']).join('\n');
+                        }, ['taxon name,taxon path,record count']).join('\n');
                         download.appendChild(document.createElement("span")).textContent = ' or as ';
                         var csvRef = download.appendChild(document.createElement("a"));
                         csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
