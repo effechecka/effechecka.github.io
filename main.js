@@ -1,6 +1,7 @@
 var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
+var taxon = require('taxon');
 
 function createEllipsis() {
     var ellipsis = document.createElement('td');
@@ -171,6 +172,34 @@ var createChecklistURL = function (dataFilter) {
     }, '?');
 };
 
+var lastNameFromPath = function (taxonPath) {
+  return taxonPath.split('|').reverse()[0];
+}
+
+var addCSVDownloadLink = function (filename, label, csvString) { 
+  var download = document.querySelector('#download');
+  download.appendChild(document.createElement("span")).textContent = ' or as ';
+  var csvRef = download.appendChild(document.createElement("a"));
+  csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
+  csvRef.setAttribute('download', filename)
+  csvRef.textContent = label;
+}
+
+var addChecklistDownloadLink = function (items) {
+  var csvString = items.reduce(function (agg, item) {
+    if (item.taxon && item.recordcount) {
+      var taxonName = lastNameFromPath(item.taxon);
+      agg = agg.concat([taxonName, item.taxon, item.recordcount].join(','));
+    }
+    return agg;
+  }, ['taxon name,taxon path,record count']).join('\n');
+  addCSVDownloadLink('checklist.csv', 'csv', csvString);
+}
+
+var addDownloadAsEOLIdsLink = function (pageIds) {
+  addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
+}
+
 var updateDownloadURL = function () {
     removeChildren("#download");
 
@@ -194,18 +223,15 @@ var updateDownloadURL = function () {
                 if (req.status === 200) {
                     var resp = JSON.parse(req.responseText);
                     if (resp.items) {
-                        var csvString = resp.items.reduce(function (agg, item) {
-                            if (item.taxon && item.recordcount) {
-                                var taxonName = item.taxon.split('|').reverse()[0];
-                                agg = agg.concat([taxonName, item.taxon, item.recordcount].join(','));
-                            }
-                            return agg;
-                        }, ['taxon name,taxon path,record count']).join('\n');
-                        download.appendChild(document.createElement("span")).textContent = ' or as ';
-                        var csvRef = download.appendChild(document.createElement("a"));
-                        csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
-                        csvRef.setAttribute('download', 'checklist.csv')
-                        csvRef.textContent = 'csv';
+                        addChecklistDownloadLink(resp.items);
+
+                        var names = resp.items.reduce(function(agg, item) { 
+                          if (item.taxon) {
+                            agg = agg.concat(lastNameFromPath(item.taxon));  
+                          }
+                          return agg;
+                        }, []);
+                        taxon.eolPageIdsFor(names, addDownloadAsEOLIdsLink);
                     }
                 }
             }
