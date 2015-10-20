@@ -198,7 +198,7 @@ var addChecklistDownloadLink = function (items) {
 }
 
 var addDownloadAsEOLIdsLink = function (pageIds) {
-  addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join(','));
+  addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
 }
 
 var updateDownloadURL = function () {
@@ -232,7 +232,6 @@ var updateDownloadURL = function () {
                           }
                           return agg;
                         }, []);
-                        console.log(JSON.stringify(names));
                         taxon.eolPageIdsFor(names, addDownloadAsEOLIdsLink);
                     }
                 }
