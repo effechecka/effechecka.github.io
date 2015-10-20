@@ -208,7 +208,7 @@ var updateDownloadURL = function () {
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
-        .textContent = 'download up to [' + dataFilter.limit + '] checklist items as ';
+        .textContent = 'save up to [' + dataFilter.limit + '] checklist items as ';
 
     var url = createChecklistURL(dataFilter);
     var jsonRef = download.appendChild(document.createElement("a"));
