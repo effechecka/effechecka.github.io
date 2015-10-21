@@ -2,6 +2,7 @@ var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
 var taxon = require('taxon');
+var myxhr = require('xhr');
 
 function createEllipsis() {
     var ellipsis = document.createElement('td');
@@ -198,6 +199,31 @@ var addChecklistDownloadLink = function (items) {
 
 var addDownloadAsEOLIdsLink = function (pageIds) {
   addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
+  var download = document.querySelector('#download');
+  download.setAttribute('data-eol-page-ids', JSON.stringify(pageIds));
+  download.appendChild(document.createElement("span")).textContent = ' or ';
+  var saveAsCollection = download.appendChild(document.createElement("button"));
+  saveAsCollection.textContent = 'save as an EOL Collection';
+  download.appendChild(document.createElement("span")).textContent = ' using api key ';
+  var apiKeyInput = download.appendChild(document.createElement("input"));
+  apiKeyInput.setAttribute('id', 'apiKey');
+  saveAsCollection.addEventListener('click', function (event) {
+    saveAsCollection.setAttribute('disabled', 'disabled');
+    var saveStatus = download.appendChild(document.createElement("span"));
+    saveStatus.setAttribute('id', 'saveStatus');
+    saveStatus.textContent = ' collection saving...';
+    var pageIds = JSON.parse(document.querySelector('#download').dataset.eolPageIds).map(function(item) { return parseInt(item); });
+    var apiKey = document.querySelector('#apiKey').value;
+    taxon.saveAsCollection(function(collectionId) {
+      var collectionURL = 'http://eol.org/collections/' + collectionId;
+      var saveStatus = ' collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
+      if (!collectionId) {
+        saveStatus = ' Failed to save collection. Bummer! This is probably a known issue: please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before opening a new one.';
+      }
+      document.querySelector('#saveStatus').innerHTML = saveStatus; }, 
+      apiKey, pageIds);
+  }, false);
+
 }
 
 var updateDownloadURL = function () {
