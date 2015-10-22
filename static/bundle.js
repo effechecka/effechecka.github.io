@@ -216,7 +216,7 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
   collectionDescription.setAttribute('id','collectionDescription');
   collectionDescription.setAttribute('placeholder','enter description');
   
-  download.appendChild(document.createElement("span")).textContent = ' using api key ';
+  download.appendChild(document.createElement("span")).innerHTML = ' using <a href="https://github.com/jhpoelen/effechecka/wiki/Save-Checklist-To-EOL-Collection" target="_blank">api key</a> ';
   var apiKeyInput = download.appendChild(document.createElement("input"));
   apiKeyInput.setAttribute('id', 'apiKey');
   apiKeyInput.setAttribute('placeholder', 'EOL api key');
