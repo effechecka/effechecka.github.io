@@ -226,6 +226,8 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
   download.appendChild(document.createElement("span")).textContent = ' limit to ';
   var limit = download.appendChild(document.createElement("input"));
   limit.setAttribute('id', 'collectionLimit');
+  limit.setAttribute('type', 'number');
+  limit.setAttribute('min', '1');
   limit.value = pageIds;
   if (pageIds.length > maxCollectionItems) {
     limit.value = maxCollectionItems;
