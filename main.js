@@ -203,10 +203,23 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
   download.setAttribute('data-eol-page-ids', JSON.stringify(pageIds));
   download.appendChild(document.createElement("span")).textContent = ' or ';
   var saveAsCollection = download.appendChild(document.createElement("button"));
-  saveAsCollection.textContent = 'save as an EOL Collection';
+  saveAsCollection.textContent = 'save as EOL Collection';
+  
+  download.appendChild(document.createElement("span")).textContent = ' with title ';
+  var collectionTitle = download.appendChild(document.createElement("input"));
+  collectionTitle.setAttribute('id','collectionTitle');
+  collectionTitle.setAttribute('placeholder','enter title');
+  
+  download.appendChild(document.createElement("span")).textContent = ' and description ';
+  var collectionDescription = download.appendChild(document.createElement("input"));
+  collectionDescription.setAttribute('id','collectionDescription');
+  collectionDescription.setAttribute('placeholder','enter description');
+  
   download.appendChild(document.createElement("span")).textContent = ' using api key ';
   var apiKeyInput = download.appendChild(document.createElement("input"));
   apiKeyInput.setAttribute('id', 'apiKey');
+  apiKeyInput.setAttribute('placeholder', 'EOL api key');
+  
   saveAsCollection.addEventListener('click', function (event) {
     saveAsCollection.setAttribute('disabled', 'disabled');
     var saveStatus = download.appendChild(document.createElement("span"));
@@ -214,14 +227,16 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
     saveStatus.textContent = ' collection saving...';
     var pageIds = JSON.parse(document.querySelector('#download').dataset.eolPageIds).map(function(item) { return parseInt(item); });
     var apiKey = document.querySelector('#apiKey').value;
+    var title = document.querySelector('#collectionTitle').value;
+    var description = document.querySelector('#collectionDescription').value;
     taxon.saveAsCollection(function(collectionId) {
       var collectionURL = 'http://eol.org/collections/' + collectionId;
       var saveStatus = ' collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
       if (!collectionId) {
-        saveStatus = ' Failed to save collection. Bummer! This is probably a known issue: please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before opening a new one.';
+        saveStatus = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > 10 items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
       }
       document.querySelector('#saveStatus').innerHTML = saveStatus; }, 
-      apiKey, pageIds);
+      apiKey, pageIds, title, description);
   }, false);
 
 }
