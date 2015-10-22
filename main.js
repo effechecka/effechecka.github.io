@@ -241,6 +241,9 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
     var apiKey = document.querySelector('#apiKey').value;
     var title = document.querySelector('#collectionTitle').value;
     var description = document.querySelector('#collectionDescription').value;
+    description = description.trim().replace(/\.+$/,'');
+    description = description.concat('. Re-create this <a href="' + window.location.href + '">regional search</a> with currently available data.');
+
     var maxElements = parseInt(document.querySelector('#collectionLimit').value);
     if (!maxElements) {
       maxElements = 30;
