@@ -60,6 +60,7 @@ function renderChecklist(checklist, resp) {
     checklist.setAttribute('data-results', resp.results);
     var headerRow = document.createElement('tr');
     var header = document.createElement('th');
+    header.setAttribute('id', 'checklistHeader');
     header.textContent = 'checklist items';
     headerRow.appendChild(header);
     header = document.createElement('th');
@@ -198,6 +199,8 @@ var addChecklistDownloadLink = function (items) {
 }
 
 var addDownloadAsEOLIdsLink = function (pageIds) {
+  console.log(pageIds);
+  var maxCollectionItems = 10;
   addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
   var download = document.querySelector('#download');
   download.setAttribute('data-eol-page-ids', JSON.stringify(pageIds));
@@ -220,6 +223,15 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
   apiKeyInput.setAttribute('id', 'apiKey');
   apiKeyInput.setAttribute('placeholder', 'EOL api key');
   
+  download.appendChild(document.createElement("span")).textContent = ' limit to ';
+  var limit = download.appendChild(document.createElement("input"));
+  limit.setAttribute('id', 'collectionLimit');
+  limit.value = pageIds;
+  if (pageIds.length > maxCollectionItems) {
+    limit.value = maxCollectionItems;
+  }
+  download.appendChild(document.createElement("span")).textContent = ' collection items.';
+
   saveAsCollection.addEventListener('click', function (event) {
     saveAsCollection.setAttribute('disabled', 'disabled');
     var saveStatus = download.appendChild(document.createElement("span"));
@@ -229,14 +241,19 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
     var apiKey = document.querySelector('#apiKey').value;
     var title = document.querySelector('#collectionTitle').value;
     var description = document.querySelector('#collectionDescription').value;
+    var maxElements = parseInt(document.querySelector('#collectionLimit').value);
+    if (!maxElements) {
+      maxElements = 30;
+    }
+    var limitedPageIds = pageIds.slice(0, maxElements);
     taxon.saveAsCollection(function(collectionId) {
       var collectionURL = 'http://eol.org/collections/' + collectionId;
       var saveStatus = ' collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
       if (!collectionId) {
-        saveStatus = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > 10 items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
+        saveStatus = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > ' + maxCollectionItems + ' items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
       }
       document.querySelector('#saveStatus').innerHTML = saveStatus; }, 
-      apiKey, pageIds, title, description);
+      apiKey, limitedPageIds, title, description);
   }, false);
 
 }
@@ -264,6 +281,14 @@ var updateDownloadURL = function () {
                 if (req.status === 200) {
                     var resp = JSON.parse(req.responseText);
                     if (resp.items) {
+                        var header = document.querySelector('#checklistHeader');
+                        if (header) {
+                          var headerText = resp.items.length + ' checklist items';
+                          if (resp.items.length > 20) {
+                            headerText = headerText.concat(' (first 20 shown)');
+                          }
+                          header.textContent = headerText;
+                        }
                         addChecklistDownloadLink(resp.items);
 
                         var names = resp.items.reduce(function(agg, item) { 
