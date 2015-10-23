@@ -2,7 +2,10 @@ var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
 var taxon = require('taxon');
-var myxhr = require('xhr');
+var datafilter = require('./datafilter.js');
+
+var effechecka = {};
+module.exports = effechecka;
 
 function createEllipsis() {
     var ellipsis = document.createElement('td');
@@ -359,7 +362,7 @@ var getDataFilter = function () {
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
     document.querySelector('#checklist').setAttribute('data-filter', dataFilterString);
-    document.location.hash = queryString.stringify(dataFilter);
+    document.location.hash = datafilter.toHash(dataFilter);
 };
 
 function collectSelectors(selector) {
@@ -474,7 +477,7 @@ var init = function () {
         updateTraitSelector();
     };
 
-    var dataFilter = queryString.parse(document.location.hash);
+    var dataFilter = datafilter.fromHash(document.location.hash);
 
     var zoom = parseInt(dataFilter.zoom || 7);
     var lat = parseFloat(dataFilter.lat || 42.31);
