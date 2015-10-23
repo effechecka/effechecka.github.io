@@ -5,6 +5,7 @@
   "main": "main.js",
   "dependencies": {
     "autocomplete-element": "^1.0.0",
+    "extend": "^3.0.0",
     "globi-data": "^0.0.43",
     "leaflet": "^0.7.3",
     "query-string": "^2.3.0",

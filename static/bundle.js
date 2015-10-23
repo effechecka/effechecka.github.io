@@ -1,19 +1,21 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var queryString = require('query-string');
+var extend = require('extend');
 
 var datafilter = {};
 
 module.exports = datafilter;
 
-datafilter.fromHash = function(hash) {
-  return queryString.parse(hash);
+datafilter.fromHash = function(hash, defaultFilter) {
+  var filter = defaultFilter || {};
+  return extend(defaultFilter, queryString.parse(hash));
 }
 
 datafilter.toHash = function(filter) {
   return queryString.stringify(filter);
 }
 
-},{"query-string":42}],2:[function(require,module,exports){
+},{"extend":39,"query-string":43}],2:[function(require,module,exports){
 var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
@@ -493,11 +495,14 @@ var init = function () {
         updateTraitSelector();
     };
 
-    var dataFilter = datafilter.fromHash(document.location.hash);
+    var filterDefaults = 
+    { geometry: 'POLYGON((-69.949951171875 43.11702412135048,-69.949951171875 41.492120839687786,-72.147216796875 41.492120839687786,-72.147216796875 43.11702412135048,-69.949951171875 43.11702412135048))', hasSpatialIssue: 'false', height: '200', lat: '42.31', limit: '20', lng: '-71.05', scientificName: 'Aves,Insecta', taxonSelector: 'Aves,Insecta', traitSelector: 'bodyMass > 10 g,bodyMass < 1.0 kg', width: '200', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
+    
+    var dataFilter = datafilter.fromHash(document.location.hash, filterDefaults);
 
-    var zoom = parseInt(dataFilter.zoom || 7);
-    var lat = parseFloat(dataFilter.lat || 42.31);
-    var lng = parseFloat(dataFilter.lng || -71.05);
+    var zoom = parseInt(dataFilter.zoom);
+    var lat = parseFloat(dataFilter.lat);
+    var lng = parseFloat(dataFilter.lng);
 
     var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
 
@@ -507,8 +512,8 @@ var init = function () {
         attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    var width = parseInt((dataFilter.width || 200));
-    var height = parseInt((dataFilter.height || 200));
+    var width = parseInt((dataFilter.width));
+    var height = parseInt((dataFilter.height));
     var areaSelect = L.areaSelect({width: width, height: height});
     areaSelect.addTo(map);
     areaSelect.on("change", function () {
@@ -516,13 +521,13 @@ var init = function () {
         updateLists();
     });
 
-    var taxonFilterNames = (dataFilter.scientificName && dataFilter.scientificName.split(',')) || ['Aves', 'Insecta'];
+    var taxonFilterNames = dataFilter.scientificName.split(',').filter(function(name) { return name.length > 0;});
 
     taxonFilterNames.forEach(function (taxonName) {
         addTaxonFilterElement(taxonName);
     });
 
-    var traitFilters = (dataFilter.traitSelector && dataFilter.traitSelector.split(',')) || ['bodyMass > 10 g', 'bodyMass < 1.0 kg'];
+    var traitFilters = dataFilter.traitSelector.split(',').filter(function(name) { return name.length > 0;});
     traitFilters.forEach(function (traitFilter) {
         addTraitFilterElement(traitFilter);
     });
@@ -592,7 +597,7 @@ window.addEventListener('load', function () {
     init();
 });
 
-},{"./datafilter.js":1,"globi-data":39,"leaflet":41,"query-string":42,"taxon":44}],3:[function(require,module,exports){
+},{"./datafilter.js":1,"globi-data":40,"leaflet":42,"query-string":43,"taxon":45}],3:[function(require,module,exports){
 
 },{}],4:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
@@ -7626,6 +7631,94 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./support/isBuffer":37,"_process":18,"inherits":15}],39:[function(require,module,exports){
+'use strict';
+
+var hasOwn = Object.prototype.hasOwnProperty;
+var toStr = Object.prototype.toString;
+
+var isArray = function isArray(arr) {
+	if (typeof Array.isArray === 'function') {
+		return Array.isArray(arr);
+	}
+
+	return toStr.call(arr) === '[object Array]';
+};
+
+var isPlainObject = function isPlainObject(obj) {
+	if (!obj || toStr.call(obj) !== '[object Object]') {
+		return false;
+	}
+
+	var hasOwnConstructor = hasOwn.call(obj, 'constructor');
+	var hasIsPrototypeOf = obj.constructor && obj.constructor.prototype && hasOwn.call(obj.constructor.prototype, 'isPrototypeOf');
+	// Not own constructor property must be Object
+	if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+		return false;
+	}
+
+	// Own properties are enumerated firstly, so to speed up,
+	// if last one is own, then all properties are own.
+	var key;
+	for (key in obj) {/**/}
+
+	return typeof key === 'undefined' || hasOwn.call(obj, key);
+};
+
+module.exports = function extend() {
+	var options, name, src, copy, copyIsArray, clone,
+		target = arguments[0],
+		i = 1,
+		length = arguments.length,
+		deep = false;
+
+	// Handle a deep copy situation
+	if (typeof target === 'boolean') {
+		deep = target;
+		target = arguments[1] || {};
+		// skip the boolean and the target
+		i = 2;
+	} else if ((typeof target !== 'object' && typeof target !== 'function') || target == null) {
+		target = {};
+	}
+
+	for (; i < length; ++i) {
+		options = arguments[i];
+		// Only deal with non-null/undefined values
+		if (options != null) {
+			// Extend the base object
+			for (name in options) {
+				src = target[name];
+				copy = options[name];
+
+				// Prevent never-ending loop
+				if (target !== copy) {
+					// Recurse if we're merging plain objects or arrays
+					if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
+						if (copyIsArray) {
+							copyIsArray = false;
+							clone = src && isArray(src) ? src : [];
+						} else {
+							clone = src && isPlainObject(src) ? src : {};
+						}
+
+						// Never move original objects, clone them
+						target[name] = extend(deep, clone, copy);
+
+					// Don't bring in undefined values
+					} else if (typeof copy !== 'undefined') {
+						target[name] = copy;
+					}
+				}
+			}
+		}
+	}
+
+	// Return the modified object
+	return target;
+};
+
+
+},{}],40:[function(require,module,exports){
 var nodeXHR = require("xmlhttprequest");
 var globiData = {};
 
@@ -7961,7 +8054,7 @@ globiData.findThumbnailById = function (search, callback) {
 
 module.exports = globiData;
 
-},{"xmlhttprequest":40}],40:[function(require,module,exports){
+},{"xmlhttprequest":41}],41:[function(require,module,exports){
 (function (process,Buffer){
 /**
  * Wrapper for built-in http.js to emulate the browser XMLHttpRequest object.
@@ -8564,7 +8657,7 @@ exports.XMLHttpRequest = function() {
 };
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":18,"buffer":5,"child_process":3,"fs":3,"http":10,"https":14,"url":36}],41:[function(require,module,exports){
+},{"_process":18,"buffer":5,"child_process":3,"fs":3,"http":10,"https":14,"url":36}],42:[function(require,module,exports){
 /*
  Leaflet, a JavaScript library for mobile-friendly interactive maps. http://leafletjs.com
  (c) 2010-2013, Vladimir Agafonkin
@@ -17728,7 +17821,7 @@ L.Map.include({
 
 
 }(window, document));
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 var strictUriEncode = require('strict-uri-encode');
 
@@ -17786,7 +17879,7 @@ exports.stringify = function (obj) {
 	}).join('&') : '';
 };
 
-},{"strict-uri-encode":43}],43:[function(require,module,exports){
+},{"strict-uri-encode":44}],44:[function(require,module,exports){
 'use strict';
 module.exports = function (str) {
 	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
@@ -17794,7 +17887,7 @@ module.exports = function (str) {
 	});
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var xhr = require('xhr');
 var taxon = {};
 
@@ -17889,7 +17982,7 @@ taxon.saveAsCollection = function(callback, apiToken, ids, name, description) {
 
 module.exports = taxon;
 
-},{"xhr":45}],45:[function(require,module,exports){
+},{"xhr":46}],46:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var once = require("once")
@@ -18080,7 +18173,7 @@ function createXHR(options, callback) {
 
 function noop() {}
 
-},{"global/window":46,"once":47,"parse-headers":51}],46:[function(require,module,exports){
+},{"global/window":47,"once":48,"parse-headers":52}],47:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -18093,7 +18186,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = once
 
 once.proto = once(function () {
@@ -18114,7 +18207,7 @@ function once (fn) {
   }
 }
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -18162,7 +18255,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":49}],49:[function(require,module,exports){
+},{"is-function":50}],50:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -18179,7 +18272,7 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -18195,7 +18288,7 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -18227,4 +18320,4 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":48,"trim":50}]},{},[2]);
+},{"for-each":49,"trim":51}]},{},[2]);

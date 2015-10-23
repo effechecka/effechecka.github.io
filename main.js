@@ -477,11 +477,14 @@ var init = function () {
         updateTraitSelector();
     };
 
-    var dataFilter = datafilter.fromHash(document.location.hash);
+    var filterDefaults = 
+    { geometry: 'POLYGON((-69.949951171875 43.11702412135048,-69.949951171875 41.492120839687786,-72.147216796875 41.492120839687786,-72.147216796875 43.11702412135048,-69.949951171875 43.11702412135048))', hasSpatialIssue: 'false', height: '200', lat: '42.31', limit: '20', lng: '-71.05', scientificName: 'Aves,Insecta', taxonSelector: 'Aves,Insecta', traitSelector: 'bodyMass > 10 g,bodyMass < 1.0 kg', width: '200', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
+    
+    var dataFilter = datafilter.fromHash(document.location.hash, filterDefaults);
 
-    var zoom = parseInt(dataFilter.zoom || 7);
-    var lat = parseFloat(dataFilter.lat || 42.31);
-    var lng = parseFloat(dataFilter.lng || -71.05);
+    var zoom = parseInt(dataFilter.zoom);
+    var lat = parseFloat(dataFilter.lat);
+    var lng = parseFloat(dataFilter.lng);
 
     var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
 
@@ -491,8 +494,8 @@ var init = function () {
         attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    var width = parseInt((dataFilter.width || 200));
-    var height = parseInt((dataFilter.height || 200));
+    var width = parseInt((dataFilter.width));
+    var height = parseInt((dataFilter.height));
     var areaSelect = L.areaSelect({width: width, height: height});
     areaSelect.addTo(map);
     areaSelect.on("change", function () {
@@ -500,13 +503,13 @@ var init = function () {
         updateLists();
     });
 
-    var taxonFilterNames = (dataFilter.scientificName && dataFilter.scientificName.split(',')) || ['Aves', 'Insecta'];
+    var taxonFilterNames = dataFilter.scientificName.split(',').filter(function(name) { return name.length > 0;});
 
     taxonFilterNames.forEach(function (taxonName) {
         addTaxonFilterElement(taxonName);
     });
 
-    var traitFilters = (dataFilter.traitSelector && dataFilter.traitSelector.split(',')) || ['bodyMass > 10 g', 'bodyMass < 1.0 kg'];
+    var traitFilters = dataFilter.traitSelector.split(',').filter(function(name) { return name.length > 0;});
     traitFilters.forEach(function (traitFilter) {
         addTraitFilterElement(traitFilter);
     });
