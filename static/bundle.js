@@ -220,7 +220,7 @@ var addChecklistDownloadLink = function (items) {
 }
 
 var addDownloadAsEOLIdsLink = function (pageIds) {
-  setChecklistStatus('ready'); 
+  setChecklistStatus('ready and linked to eol pages'); 
   var maxCollectionItems = 10;
   addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
   var download = document.querySelector('#download');
@@ -17953,7 +17953,7 @@ taxon.eolPageIdsFor = function(names, callback) {
         var pageIds = [];
         if (resp.statusCode == 200) {
           var result = JSON.parse(body);
-            if (result) {
+            if (typeof(result.query.results.json.data) !== 'undefined') {
               var data = result.query.results.json.data;
               if (Array.isArray(data)) {
                 pageIds = data.reduce(appendPageIds, pageIds);
