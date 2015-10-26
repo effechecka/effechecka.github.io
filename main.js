@@ -3,6 +3,7 @@ var queryString = require('query-string');
 var L = require('leaflet');
 var taxon = require('taxon');
 var datafilter = require('./datafilter.js');
+var namefilter = require('./namefilter.js');
 
 var effechecka = {};
 module.exports = effechecka;
@@ -177,10 +178,6 @@ var createChecklistURL = function (dataFilter) {
     }, '?');
 };
 
-var lastNameFromPath = function (taxonPath) {
-  return taxonPath.split('|').reverse()[0];
-}
-
 var addCSVDownloadLink = function (filename, label, csvString) { 
   var download = document.querySelector('#download');
   download.appendChild(document.createElement("span")).textContent = ' or as ';
@@ -193,7 +190,7 @@ var addCSVDownloadLink = function (filename, label, csvString) {
 var addChecklistDownloadLink = function (items) {
   var csvString = items.reduce(function (agg, item) {
     if (item.taxon && item.recordcount) {
-      var taxonName = lastNameFromPath(item.taxon);
+      var taxonName = namefilter.lastNameFromPath(item.taxon);
       agg = agg.concat([taxonName, item.taxon, item.recordcount].join(','));
     }
     return agg;
@@ -302,7 +299,7 @@ var updateDownloadURL = function () {
 
                         var names = resp.items.reduce(function(agg, item) { 
                           if (item.taxon) {
-                            agg = agg.concat(lastNameFromPath(item.taxon));  
+                            agg = agg.concat(namefilter.lastNameFromPath(item.taxon));  
                           }
                           return agg;
                         }, []);
