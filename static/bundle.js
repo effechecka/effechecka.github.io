@@ -217,7 +217,7 @@ var addChecklistDownloadLink = function (items) {
 }
 
 var addDownloadAsEOLIdsLink = function (pageIds) {
-  setChecklistStatus('ready and linked to eol pages'); 
+  setChecklistStatus('ready'); 
   var maxCollectionItems = 10;
   addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
   var download = document.querySelector('#download');
