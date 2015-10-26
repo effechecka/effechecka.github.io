@@ -17889,6 +17889,7 @@ module.exports = function (str) {
 
 },{}],45:[function(require,module,exports){
 var xhr = require('xhr');
+var queue = require('queue');
 var taxon = {};
 
 taxon.proxiedUrl = function(url) {
@@ -17905,7 +17906,6 @@ taxon.resolverUrlFor = function(names) {
 
 taxon.eolPageIdsFor = function(names, callback) {
   var isExactMatch = function(result) { return ['1','2'].indexOf(result.match_type) != -1; };
-  var uri = taxon.resolverUrlFor(names);
   var extractPageIds = function(results) {
     var urlHash = results.reduce(function(agg, result) {
       if (isExactMatch(result)) {
@@ -17918,33 +17918,56 @@ taxon.eolPageIdsFor = function(names, callback) {
 
   var appendPageIds = function(ids, data) {
     appendedIds = [].concat(ids);
-    if (Array.isArray(data.results)) {
-      appendedIds = appendedIds.concat(extractPageIds(data.results));
-    } else if (data.results) {
-      if (isExactMatch(data.results)) {
-        appendedIds = appendedIds.concat([data.results.local_id]);
+    if (data && data.results) {
+      if (Array.isArray(data.results)) {
+        appendedIds = appendedIds.concat(extractPageIds(data.results));
+      } else {
+        if (isExactMatch(data.results)) {
+          appendedIds = appendedIds.concat([data.results.local_id]);
+        }
       }
     } 
     return appendedIds;  
   };
 
-  xhr({
-    uri: uri,
-    headers: { 'Accept': 'application/json' }
-  }, function (err, resp, body) {
-    if (resp.statusCode == 200) {
-      var result = JSON.parse(body);
-      if (result) {
-        var data = result.query.results.json.data;
+  var q = queue();
+  q.timeout = 30000;
+  var allPageIds = [];
+  
+  var uris = [];
+  var nameChunkSize = 200;
+  for (var i=0; i <= names.length / nameChunkSize; i++) {
+    var start = i * nameChunkSize;
+    var namesChunk = names.slice(start, start + nameChunkSize);
+    var uri = taxon.resolverUrlFor(namesChunk);
+    uris.push(uri);
+  }
+
+  uris.forEach(function(uri){
+    q.push(function(cb) {
+      xhr({
+        uri: uri,
+        headers: { 'Accept': 'application/json' }
+      }, function (err, resp, body) {
         var pageIds = [];
-        if (Array.isArray(data)) {
-          pageIds = data.reduce(appendPageIds, pageIds);
-        } else {
-          pageIds = appendPageIds(pageIds, data);  
-        }
-        callback(pageIds);
-      }
-    }
+        if (resp.statusCode == 200) {
+          var result = JSON.parse(body);
+            if (result) {
+              var data = result.query.results.json.data;
+              if (Array.isArray(data)) {
+                pageIds = data.reduce(appendPageIds, pageIds);
+              } else {
+                pageIds = appendPageIds(pageIds, data);  
+              }
+            }
+          } 
+          Array.prototype.push.apply(allPageIds, pageIds);
+          cb();
+      });
+    });
+  });
+  q.start(function(err) {
+    callback(allPageIds);
   });
 };
 
@@ -17982,7 +18005,148 @@ taxon.saveAsCollection = function(callback, apiToken, ids, name, description) {
 
 module.exports = taxon;
 
-},{"xhr":46}],46:[function(require,module,exports){
+},{"queue":46,"xhr":48}],46:[function(require,module,exports){
+var inherits = require('inherits');
+var EventEmitter = require('events').EventEmitter;
+
+module.exports = Queue;
+
+function Queue(options) {
+  if (!(this instanceof Queue))
+    return new Queue(options);
+  
+  EventEmitter.call(this);
+  options = options || {};
+  this.concurrency = options.concurrency || Infinity;
+  this.timeout = options.timeout || 0;
+  this.pending = 0;
+  this.session = 0;
+  this.running = false;
+  this.jobs = [];
+}
+inherits(Queue, EventEmitter);
+
+var arrayMethods = [
+  'push',
+  'unshift',
+  'splice',
+  'pop',
+  'shift',
+  'slice',
+  'reverse',
+  'indexOf',
+  'lastIndexOf'
+];
+
+for (var method in arrayMethods) (function(method) {
+  Queue.prototype[method] = function() {
+    return Array.prototype[method].apply(this.jobs, arguments);
+  };
+})(arrayMethods[method]);
+
+Object.defineProperty(Queue.prototype, 'length', { get: function() {
+  return this.pending + this.jobs.length;
+}});
+
+Queue.prototype.start = function(cb) {
+  if (cb) {
+    callOnErrorOrEnd.call(this, cb);
+  }
+
+  if (this.pending === this.concurrency) {
+    return;
+  }
+  
+  if (this.jobs.length === 0) {
+    if (this.pending === 0) {
+      done.call(this);
+    }
+    return;
+  }
+  
+  var self = this;
+  var job = this.jobs.shift();
+  var once = true;
+  var session = this.session;
+  var timeoutId = null;
+  var didTimeout = false;
+  
+  function next(err, result) {
+    if (once && self.session === session) {
+      once = false;
+      self.pending--;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      
+      if (err) {
+        self.emit('error', err, job);
+      } else if (didTimeout === false) {
+        self.emit('success', result, job);
+      }
+      
+      if (self.session === session) {
+        if (self.pending === 0 && self.jobs.length === 0) {
+          done.call(self);
+        } else if (self.running) {
+          self.start();
+        }
+      }
+    }
+  }
+  
+  if (this.timeout) {
+    timeoutId = setTimeout(function() {
+      didTimeout = true;
+      if (self.listeners('timeout').length > 0) {
+        self.emit('timeout', next, job);
+      } else {
+        next();
+      }
+    }, this.timeout);
+  }
+  
+  this.pending++;
+  this.running = true;
+  job(next);
+  
+  if (this.jobs.length > 0) {
+    this.start();
+  }
+};
+
+Queue.prototype.stop = function() {
+  this.running = false;
+};
+
+Queue.prototype.end = function(err) {
+  this.jobs.length = 0;
+  this.pending = 0;
+  done.call(this, err);
+};
+
+function callOnErrorOrEnd(cb) {
+  var self = this;
+  this.on('error', onerror);
+  this.on('end', onend);
+
+  function onerror(err) { self.end(err); }
+  function onend(err) {
+    self.removeListener('error', onerror);
+    self.removeListener('end', onend);
+    cb(err);
+  }
+}
+
+function done(err) {
+  this.session++;
+  this.running = false;
+  this.emit('end', err);
+}
+
+},{"events":9,"inherits":47}],47:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],48:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var once = require("once")
@@ -18173,7 +18337,7 @@ function createXHR(options, callback) {
 
 function noop() {}
 
-},{"global/window":47,"once":48,"parse-headers":52}],47:[function(require,module,exports){
+},{"global/window":49,"once":50,"parse-headers":54}],49:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -18186,7 +18350,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = once
 
 once.proto = once(function () {
@@ -18207,7 +18371,7 @@ function once (fn) {
   }
 }
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -18255,7 +18419,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":50}],50:[function(require,module,exports){
+},{"is-function":52}],52:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -18272,7 +18436,7 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],51:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -18288,7 +18452,7 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -18320,4 +18484,4 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":49,"trim":51}]},{},[2]);
+},{"for-each":51,"trim":53}]},{},[2]);
