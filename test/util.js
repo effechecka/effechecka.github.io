@@ -18,3 +18,18 @@ test('clamp lng', function(t) {
   t.equal(u.normLng(360), 0);
 });
 
+test('wkt envelope', function(t) {
+  t.plan(2);
+  t.equal(u.wktEnvelope({ _northEast: { lat: 12, lng: 1 }
+    , _southWest: { lat: 10, lng: 0 }}), 'ENVELOPE(0,1,12,10)');
+  t.equal(u.wktEnvelope({ _northEast: { lat: 12, lng: -90 }
+    , _southWest: { lat: 10, lng: 90 }}), 'ENVELOPE(90,-90,12,10)');
+});
+
+test('wkt polygon', function(t) {
+  t.plan(2);
+  t.equal(u.wktPolygon({ _northEast: { lat: 12, lng: 1 }
+    , _southWest: { lat: 10, lng: 0 }}), 'POLYGON((1 12,1 10,0 10,0 12,1 12))');
+  t.equal(u.wktPolygon({ _northEast: { lat: 12, lng: -90 }
+    , _southWest: { lat: 10, lng: 90 }}), 'POLYGON((-90 12,-90 10,90 10,90 12,-90 12))');
+});

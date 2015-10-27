@@ -361,6 +361,9 @@ var getDataFilter = function () {
 
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
+
+    document.querySelector('#envelope').textContent = dataFilter.wktString;
+    document.querySelector('#polygon').textContent = dataFilter.geometry;
     document.querySelector('#checklist').setAttribute('data-filter', dataFilterString);
     document.location.hash = util.toHash(dataFilter);
 };
@@ -409,19 +412,10 @@ function getBoundsArea(areaSelect) {
 
 var updateBBox = function (areaSelect) {
     var bounds = getBoundsArea(areaSelect);
-    var wktPoints = bounds._northEast.lng + ' ' + bounds._northEast.lat
-        + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
-        + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat
-        + ',' + bounds._southWest.lng + ' ' + bounds._northEast.lat
-        + ',' + bounds._northEast.lng + ' ' + bounds._northEast.lat;
-
+    
     var dataFilter = getDataFilter();
-    dataFilter.geometry = 'POLYGON((' + wktPoints + '))';
-
-    dataFilter.wktString = 'ENVELOPE(' + [bounds._northEast.lng, 
-        bounds._southWest.lng,
-        bounds._northEast.lat, 
-        bounds._southWest.lat].join(',') + ')';
+    dataFilter.geometry = util.wktPolygon(bounds);
+    dataFilter.wktString = util.wktEnvelope(bounds); 
 
     dataFilter.zoom = areaSelect.map.getZoom();
     dataFilter.lat = areaSelect.map.getCenter().lat;
@@ -18509,5 +18503,22 @@ util.normLng = function(lng) {
   var sign = Math.trunc((lng / 180) % 2) == 0 ? 1 : -1;
   return Math.abs(lng / 180) == 1 ? lng : sign * lng % 180; 
 }
+
+util.wktPolygon = function(bounds) {
+  var wktPoints = bounds._northEast.lng + ' ' + bounds._northEast.lat              
+  + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
+  + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat
+  + ',' + bounds._southWest.lng + ' ' + bounds._northEast.lat
+  + ',' + bounds._northEast.lng + ' ' + bounds._northEast.lat;
+  return 'POLYGON((' + wktPoints + '))';
+};
+
+util.wktEnvelope = function(bounds) {
+  return 'ENVELOPE(' + [bounds._southWest.lng, 
+    bounds._northEast.lng,
+    bounds._northEast.lat, 
+    bounds._southWest.lat].join(',') + ')';
+}
+
 
 },{"extend":38,"query-string":42}]},{},[1]);

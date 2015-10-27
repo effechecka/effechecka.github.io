@@ -26,3 +26,20 @@ util.normLng = function(lng) {
   var sign = Math.trunc((lng / 180) % 2) == 0 ? 1 : -1;
   return Math.abs(lng / 180) == 1 ? lng : sign * lng % 180; 
 }
+
+util.wktPolygon = function(bounds) {
+  var wktPoints = bounds._northEast.lng + ' ' + bounds._northEast.lat              
+  + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
+  + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat
+  + ',' + bounds._southWest.lng + ' ' + bounds._northEast.lat
+  + ',' + bounds._northEast.lng + ' ' + bounds._northEast.lat;
+  return 'POLYGON((' + wktPoints + '))';
+};
+
+util.wktEnvelope = function(bounds) {
+  return 'ENVELOPE(' + [bounds._southWest.lng, 
+    bounds._northEast.lng,
+    bounds._northEast.lat, 
+    bounds._southWest.lat].join(',') + ')';
+}
+
