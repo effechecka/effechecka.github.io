@@ -2,8 +2,7 @@ var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
 var taxon = require('taxon');
-var datafilter = require('./datafilter.js');
-var namefilter = require('./namefilter.js');
+var util = require('./util.js');
 
 var effechecka = {};
 module.exports = effechecka;
@@ -190,7 +189,7 @@ var addCSVDownloadLink = function (filename, label, csvString) {
 var addChecklistDownloadLink = function (items) {
   var csvString = items.reduce(function (agg, item) {
     if (item.taxon && item.recordcount) {
-      var taxonName = namefilter.lastNameFromPath(item.taxon);
+      var taxonName = util.lastNameFromPath(item.taxon);
       agg = agg.concat([taxonName, item.taxon, item.recordcount].join(','));
     }
     return agg;
@@ -299,7 +298,7 @@ var updateDownloadURL = function () {
 
                         var names = resp.items.reduce(function(agg, item) { 
                           if (item.taxon) {
-                            agg = agg.concat(namefilter.lastNameFromPath(item.taxon));  
+                            agg = agg.concat(util.lastNameFromPath(item.taxon));  
                           }
                           return agg;
                         }, []);
@@ -327,6 +326,8 @@ var updateChecklist = function () {
                         renderChecklist(checklist, resp);
                         if (resp.items.length > 0) {
                             updateDownloadURL();
+                        } else {
+                            setChecklistStatus(resp.status);
                         }
                     }
                 } else {
@@ -360,7 +361,7 @@ var getDataFilter = function () {
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
     document.querySelector('#checklist').setAttribute('data-filter', dataFilterString);
-    document.location.hash = datafilter.toHash(dataFilter);
+    document.location.hash = util.toHash(dataFilter);
 };
 
 function collectSelectors(selector) {
@@ -390,8 +391,23 @@ function updateTraitSelector() {
     setDataFilter(filter);
 }
 
+function getBoundsArea(areaSelect) {
+  var size = areaSelect.map.getSize();
+  var topRight = new L.Point();
+  var bottomLeft = new L.Point();
+  bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
+  topRight.y = Math.round((size.y - areaSelect._height) / 2);
+  topRight.x = size.x - bottomLeft.x;
+  bottomLeft.y = size.y - topRight.y;
+  var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
+  sw.lng = util.normLng(sw.lng);
+  var ne = areaSelect.map.containerPointToLatLng(topRight);
+  ne.lng = util.normLng(ne.lng);
+  return new L.LatLngBounds(sw, ne);
+}
+
 var updateBBox = function (areaSelect) {
-    var bounds = areaSelect.getBounds();
+    var bounds = getBoundsArea(areaSelect);
     var wktPoints = bounds._northEast.lng + ' ' + bounds._northEast.lat
         + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
         + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat
@@ -401,11 +417,10 @@ var updateBBox = function (areaSelect) {
     var dataFilter = getDataFilter();
     dataFilter.geometry = 'POLYGON((' + wktPoints + '))';
 
-    var lngMin = Math.min(bounds._northEast.lng, bounds._southWest.lng);
-    var lngMax = Math.max(bounds._northEast.lng, bounds._southWest.lng);
-    var latMin = Math.min(bounds._northEast.lat, bounds._southWest.lat);
-    var latMax = Math.max(bounds._northEast.lat, bounds._southWest.lat);
-    dataFilter.wktString = 'ENVELOPE(' + [lngMin, lngMax, latMax, latMin].join(',') + ')';
+    dataFilter.wktString = 'ENVELOPE(' + [bounds._northEast.lng, 
+        bounds._southWest.lng,
+        bounds._northEast.lat, 
+        bounds._southWest.lat].join(',') + ')';
 
     dataFilter.zoom = areaSelect.map.getZoom();
     dataFilter.lat = areaSelect.map.getCenter().lat;
@@ -478,14 +493,14 @@ var init = function () {
     var filterDefaults = 
     { geometry: 'POLYGON((-69.949951171875 43.11702412135048,-69.949951171875 41.492120839687786,-72.147216796875 41.492120839687786,-72.147216796875 43.11702412135048,-69.949951171875 43.11702412135048))', hasSpatialIssue: 'false', height: '200', lat: '42.31', limit: '20', lng: '-71.05', scientificName: 'Aves,Insecta', taxonSelector: 'Aves,Insecta', traitSelector: 'bodyMass > 10 g,bodyMass < 1.0 kg', width: '200', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
     
-    var dataFilter = datafilter.fromHash(document.location.hash, filterDefaults);
+    var dataFilter = util.fromHash(document.location.hash, filterDefaults);
 
     var zoom = parseInt(dataFilter.zoom);
     var lat = parseFloat(dataFilter.lat);
     var lng = parseFloat(dataFilter.lng);
 
     var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
-
+    
     var tileUrlTemplate = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
     L.tileLayer(tileUrlTemplate, {
         maxZoom: 18,

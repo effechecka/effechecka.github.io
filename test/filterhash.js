@@ -1,5 +1,5 @@
 var test = require('tape');
-var datafilter = require('../datafilter.js');
+var datafilter = require('../util.js');
 
 test('parse/ stringify data filter from/ to hash', function(t) {
   t.plan(2);
