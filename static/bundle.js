@@ -401,7 +401,6 @@ function getBoundsArea(areaSelect) {
   var bottomLeft = new L.Point();
   // this only holds when the size of the map lies within the container
 
-  console.log(JSON.stringify(areaSelect.map.getCenter()));
   bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
   topRight.y = Math.round((size.y - areaSelect._height) / 2);
   topRight.x = size.x - bottomLeft.x;
@@ -17957,7 +17956,7 @@ taxon.eolPageIdsFor = function(names, callback) {
         var pageIds = [];
         if (resp.statusCode == 200) {
           var result = JSON.parse(body);
-            if (typeof(result.query.results.json.data) !== 'undefined') {
+            if (result.query && result.query.results && result.query.results.json) {
               var data = result.query.results.json.data;
               if (Array.isArray(data)) {
                 pageIds = data.reduce(appendPageIds, pageIds);
@@ -17972,15 +17971,18 @@ taxon.eolPageIdsFor = function(names, callback) {
     });
   });
   q.start(function(err) {
-    callback(allPageIds);
+    callback(uniq(allPageIds));
   });
 };
 
+var uniq = function(ids) {
+  return ids.filter(function(item, pos) {
+    return ids.indexOf(item) == pos;
+  });
+}
 
 taxon.saveAsCollection = function(callback, apiToken, ids, name, description) {
-  var uniqueIds = ids.filter(function(item, pos) {
-      return ids.indexOf(item) == pos;
-  });
+  var uniqueIds = uniq(ids);
 
   var items = uniqueIds.reduce(function(agg, id) { 
     return agg.concat([{collected_item_type: 'TaxonConcept', collected_item_id: id}]); },
