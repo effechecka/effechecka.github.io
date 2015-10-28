@@ -21,11 +21,19 @@ util.lastNameFromPath = function(path) {
     .reverse()[0];
 };
 
+
+// from leaflet Util.wrapNum 
+util.wrapNum = function(x, range, includeMax) {
+    var max = range[1],
+        min = range[0],
+        d = max - min;
+    return x === max && includeMax ? x : ((x - min) % d + d) % d + min;
+};
+
 // clip lng between [-180,180]
 util.normLng = function(lng) {
-  var sign = Math.trunc((lng / 180) % 2) == 0 ? 1 : -1;
-  return Math.abs(lng / 180) == 1 ? lng : sign * lng % 180; 
-}
+  return util.wrapNum(lng, [-180, 180], true);
+};
 
 util.normBounds = function(bounds) {
   var ne = bounds._northEast;
