@@ -121,14 +121,10 @@ Matthew Collins of iDigBio presented a <a href="http://figshare.com/articles/Who
 </div>
 <h1>occurrences</h1>
 
-<p>Occurrences are retrieved directly from the <a href="http://www.gbif.org/developer/summary">GBIF API</a>. The items
-    in the list correspond to individual GBIF occurrence records that were recorded within the given area and the first
-    taxonomic constraint (e.g. if "Aves" and "Insecta" are selected, only "Aves" is applied). So, the list may contain
-    duplicates and is not ordered in any way. Only the top 20 matching occurrence records are provided for performance
-    and simplicity sake. </p>
+<p>Occurrences are retrieved directly from the <a href="http://www.gbif.org/developer/summary">GBIF API</a>.</p>
 
 <p>When the checklist generator includes GBIF data this feature will be deprecated. Until then, this list serves as a
-spot check for quick comparison between the iDigBio based checklist and GBIF occurrence records. </p><p><b>Known limitation</b> GBIF API does not support spatial selections that cross the dateline (e.g. a box that covers US and Japan, but not Europe). Instead, GBIF inverts the longitudinal selection criteria, leading to unexpected results. The checklist generation does support dateline wrapping.</p>
+spot check for quick comparison between the iDigBio based checklist and GBIF occurrence records. </p><p><b>Known limitations</b> (a) Only the top 20 matching occurrence records are provided for performance and simplicity sake. (b) The items in the list correspond to individual GBIF occurrence records that were recorded within the given area and the first taxonomic constraint (e.g. if "Aves" and "Insecta" are selected, only "Aves" is applied). So, the list may contain duplicates and is not ordered in any way. (c) GBIF API does not support spatial selections that cross the dateline (e.g. a box that covers US and Japan, but not Europe). Instead, GBIF inverts the longitudinal selection criteria, leading to unexpected results. The checklist generation does support dateline wrapping.</p>
 
 <div id="occurrenceStatus"></div>
 <table id="occurrences">
