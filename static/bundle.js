@@ -400,12 +400,29 @@ function getBoundsArea(areaSelect) {
   var topRight = new L.Point();
   var bottomLeft = new L.Point();
   // this only holds when the size of the map lies within the container
+
+  console.log(JSON.stringify(areaSelect.map.getCenter()));
   bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
   topRight.y = Math.round((size.y - areaSelect._height) / 2);
   topRight.x = size.x - bottomLeft.x;
   bottomLeft.y = size.y - topRight.y;
+  var northPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(90, 0)).y;
+  var southPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(-90, 0)).y;
   var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
+  if (bottomLeft.y > southPoleY) {
+    sw.lat = -90;
+  } 
+  if (bottomLeft.y < northPoleY) {
+    sw.lat = 90;
+  }
   var ne = areaSelect.map.containerPointToLatLng(topRight);
+  // for some reason, latLngToContainerPoint(...) doesn't make sharp cut at poles.
+  if (topRight.y < northPoleY) {
+    ne.lat = 90;  
+  }
+  if (topRight.y > southPoleY) {
+    sw.lat = -90;
+  }
   return util.normBounds(new L.LatLngBounds(sw, ne));
 }
 
@@ -493,7 +510,7 @@ var init = function () {
     var lng = parseFloat(dataFilter.lng);
 
     var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
-    
+    effechecka.map = map;
     var tileUrlTemplate = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
     L.tileLayer(tileUrlTemplate, {
         maxZoom: 18,
