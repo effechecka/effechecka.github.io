@@ -43,11 +43,11 @@ util.normBounds = function(bounds) {
 }
 
 util.wktPolygon = function(bounds) {
-  var wktPoints = bounds._northEast.lng + ' ' + bounds._northEast.lat              
-  + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
-  + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat
+  var wktPoints = bounds._southWest.lng + ' ' + bounds._southWest.lat              
   + ',' + bounds._southWest.lng + ' ' + bounds._northEast.lat
-  + ',' + bounds._northEast.lng + ' ' + bounds._northEast.lat;
+  + ',' + bounds._northEast.lng + ' ' + bounds._northEast.lat
+  + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
+  + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat;
   return 'POLYGON((' + wktPoints + '))';
 };
 
