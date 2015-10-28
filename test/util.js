@@ -33,3 +33,10 @@ test('wkt polygon', function(t) {
   t.equal(u.wktPolygon({ _northEast: { lat: 12, lng: -90 }
     , _southWest: { lat: 10, lng: 90 }}), 'POLYGON((-90 12,-90 10,90 10,90 12,-90 12))');
 });
+
+test('normalize bounds', function(t) {
+  t.plan(1);
+  var arcticCanadaRussia = { _northEast: {lat: 87.04309838968054, lng: 87.1875}, _southWest: { lat: 55.7765730186677, lng: -243.28125}};
+  var expectedBounds = { _northEast: {lat: 87.04309838968054, lng: 87.1875}, _southWest: { lat: 55.7765730186677, lng: 63.28125}};
+  t.deepEqual(u.normBounds(arcticCanadaRussia), expectedBounds); 
+});

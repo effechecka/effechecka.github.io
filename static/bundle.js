@@ -399,20 +399,18 @@ function getBoundsArea(areaSelect) {
   var size = areaSelect.map.getSize();
   var topRight = new L.Point();
   var bottomLeft = new L.Point();
+  // this only holds when the size of the map lies within the container
   bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
   topRight.y = Math.round((size.y - areaSelect._height) / 2);
   topRight.x = size.x - bottomLeft.x;
   bottomLeft.y = size.y - topRight.y;
   var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
-  sw.lng = util.normLng(sw.lng);
   var ne = areaSelect.map.containerPointToLatLng(topRight);
-  ne.lng = util.normLng(ne.lng);
-  return new L.LatLngBounds(sw, ne);
+  return util.normBounds(new L.LatLngBounds(sw, ne));
 }
 
 var updateBBox = function (areaSelect) {
     var bounds = getBoundsArea(areaSelect);
-    
     var dataFilter = getDataFilter();
     dataFilter.geometry = util.wktPolygon(bounds);
     dataFilter.wktString = util.wktEnvelope(bounds); 
@@ -18502,6 +18500,13 @@ util.lastNameFromPath = function(path) {
 util.normLng = function(lng) {
   var sign = Math.trunc((lng / 180) % 2) == 0 ? 1 : -1;
   return Math.abs(lng / 180) == 1 ? lng : sign * lng % 180; 
+}
+
+util.normBounds = function(bounds) {
+  var ne = bounds._northEast;
+  var sw = bounds._southWest;
+  return { _northEast: { lat: ne.lat, lng: util.normLng(ne.lng) }, 
+    _southWest: { lat: sw.lat, lng: util.normLng(sw.lng) } };
 }
 
 util.wktPolygon = function(bounds) {

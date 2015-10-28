@@ -27,6 +27,13 @@ util.normLng = function(lng) {
   return Math.abs(lng / 180) == 1 ? lng : sign * lng % 180; 
 }
 
+util.normBounds = function(bounds) {
+  var ne = bounds._northEast;
+  var sw = bounds._southWest;
+  return { _northEast: { lat: ne.lat, lng: util.normLng(ne.lng) }, 
+    _southWest: { lat: sw.lat, lng: util.normLng(sw.lng) } };
+}
+
 util.wktPolygon = function(bounds) {
   var wktPoints = bounds._northEast.lng + ' ' + bounds._northEast.lat              
   + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat

@@ -398,20 +398,18 @@ function getBoundsArea(areaSelect) {
   var size = areaSelect.map.getSize();
   var topRight = new L.Point();
   var bottomLeft = new L.Point();
+  // this only holds when the size of the map lies within the container
   bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
   topRight.y = Math.round((size.y - areaSelect._height) / 2);
   topRight.x = size.x - bottomLeft.x;
   bottomLeft.y = size.y - topRight.y;
   var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
-  sw.lng = util.normLng(sw.lng);
   var ne = areaSelect.map.containerPointToLatLng(topRight);
-  ne.lng = util.normLng(ne.lng);
-  return new L.LatLngBounds(sw, ne);
+  return util.normBounds(new L.LatLngBounds(sw, ne));
 }
 
 var updateBBox = function (areaSelect) {
     var bounds = getBoundsArea(areaSelect);
-    
     var dataFilter = getDataFilter();
     dataFilter.geometry = util.wktPolygon(bounds);
     dataFilter.wktString = util.wktEnvelope(bounds); 
