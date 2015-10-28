@@ -236,9 +236,12 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
 
   saveAsCollection.addEventListener('click', function (event) {
     saveAsCollection.setAttribute('disabled', 'disabled');
-    var saveStatus = download.appendChild(document.createElement("span"));
-    saveStatus.setAttribute('id', 'saveStatus');
-    saveStatus.textContent = ' collection saving...';
+    var saveStatus = document.querySelector('#saveStatus');
+    if (!saveStatus) {
+      saveStatus = download.appendChild(document.createElement("span"));
+      saveStatus.setAttribute('id', 'saveStatus');
+    }
+    saveStatus.innerHTML = ' collection saving...';
     var pageIds = JSON.parse(document.querySelector('#download').dataset.eolPageIds).map(function(item) { return parseInt(item); });
     var apiKey = document.querySelector('#apiKey').value;
     var title = document.querySelector('#collectionTitle').value;
@@ -253,12 +256,14 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
     var limitedPageIds = pageIds.slice(0, maxElements);
     taxon.saveAsCollection(function(collectionId) {
       var collectionURL = 'http://eol.org/collections/' + collectionId;
-      var saveStatus = ' collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
+      var saveStatusHTML = ' collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
       if (!collectionId) {
-        saveStatus = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > ' + maxCollectionItems + ' items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
+        saveStatusHTML = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > ' + maxCollectionItems + ' items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
       }
-      document.querySelector('#saveStatus').innerHTML = saveStatus; }, 
-      apiKey, limitedPageIds, title, description);
+      document.querySelector('#saveStatus').innerHTML = saveStatusHTML; 
+      saveAsCollection.removeAttribute('disabled');
+    }, 
+    apiKey, limitedPageIds, title, description);
   }, false);
 
 }
