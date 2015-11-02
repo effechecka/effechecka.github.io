@@ -471,6 +471,7 @@ var init = function () {
             var traitValue = traitValueElem.value;
             var traitUnit = document.getElementById('traitUnit').value;
             var traitSelector = [traitName, traitOperator, traitValue, traitUnit].join(' ');
+            updateLists();
             addTraitFilterElement(traitSelector);
             traitValueElem.value = '';
         });
@@ -480,8 +481,8 @@ var init = function () {
     var addTaxonButton = document.getElementById('addTaxonSelector');
 
     function addAndUpdateTaxonSelector(taxonName, taxonSelectorInput) {
-        addTaxonFilterElement(taxonName);
         updateLists();
+        addTaxonFilterElement(taxonName);
         taxonSelectorInput.value = '';
         removeChildren('#suggestions');
     }
