@@ -12,47 +12,6 @@ function createEllipsis() {
     ellipsis.textContent = '...';
     return ellipsis;
 }
-function renderGBIF(occurrences, resp) {
-    occurrences.setAttribute('data-results', resp.results);
-    var headerRow = document.createElement('tr');
-    var header = document.createElement('th');
-    header.textContent = 'taxon occurrences';
-    headerRow.appendChild(header);
-    header = document.createElement('th');
-    header.textContent = '(lat,lng)';
-    headerRow.appendChild(header);
-    occurrences.appendChild(headerRow);
-    resp.results.forEach(function (occurrence) {
-        var row = document.createElement('tr');
-        var path = document.createElement('td');
-        var pathElems = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'].reduce(function (pathFull, pathPart) {
-            var pathPartValue = occurrence[pathPart];
-            if (pathPartValue !== undefined) {
-                var pathPartElem = document.createElement('a');
-                pathPartElem.setAttribute('href', 'http://eol.org/' + pathPartValue);
-                pathPartElem.textContent = pathPartValue;
-                pathPartElem.setAttribute('title', 'search EOL for [' + pathPartValue + '] by name');
-                var sepElem = document.createElement('span');
-                sepElem.textContent = ' | ';
-                return pathFull.concat([pathPartElem, sepElem])
-            } else {
-                return pathFull;
-            }
-        }, []);
-        pathElems.forEach(function (elem) {
-            path.appendChild(elem);
-        });
-        row.appendChild(path);
-        var latLng = document.createElement('td');
-        latLng.textContent = '(' + occurrence.decimalLatitude + ',' + occurrence.decimalLongitude + ')';
-        row.appendChild(latLng);
-        occurrences.appendChild(row);
-    });
-    var ellipsisRow = document.createElement('tr');
-    ellipsisRow.appendChild(createEllipsis());
-    ellipsisRow.appendChild(createEllipsis());
-    occurrences.appendChild(ellipsisRow);
-}
 
 function sepElem() {
     var sepElem = document.createElement('span');
@@ -115,44 +74,10 @@ function xhr() {
     }
     return req;
 }
-var updateOccurrences = function () {
-    var req = xhr();
-    if (req !== undefined) {
-        var baseUrl = 'http://api.gbif.org/v1/occurrence/search';
-        var dataFilter = getDataFilter();
-        var query = Object.keys(dataFilter).reduce(function (accum, key) {
-            if (dataFilter[key] !== null) {
-                return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
-            } else {
-                return accum;
-            }
-        }, '?');
-
-        var url = baseUrl + query;
-        req.open('GET', url, true);
-        req.onreadystatechange = function () {
-            if (req.readyState === 4) {
-                setOccurrenceStatus('received response');
-                if (req.status === 200) {
-                    var resp = JSON.parse(req.responseText);
-                    setOccurrenceStatus('got [' + resp.count + '] matches from gbif');
-                    if (resp.results) {
-                        renderGBIF(occurrences, resp);
-                    }
-                } else {
-                    setOccurrenceStatus('not ok. Received a [' + req.status + '] status with text [' + req.statusText + '] in response to [' + url + ']');
-                }
-            }
-        };
-        removeChildren('#occurrences');
-        setOccurrenceStatus('building new list...');
-        req.send(null);
-    }
-};
 
 var removeChildren = function (selector) {
     var checklist = document.querySelector(selector);
-    while (checklist.firstChild) {
+    while (checklist && checklist.firstChild) {
         checklist.removeChild(checklist.firstChild);
     }
     return checklist;
@@ -346,19 +271,15 @@ var updateChecklist = function () {
     }
 };
 
-var setOccurrenceStatus = function (status) {
-    document.querySelector('#occurrenceStatus').textContent = status;
-};
-
 var setChecklistStatus = function (status) {
     document.querySelector('#checklistStatus').textContent = status;
 };
 
 var getDataFilter = function () {
-    var occurrences = document.querySelector('#checklist');
-    var dataFilter = { hasSpatialIssue: 'false', limit: 20 };
-    if (occurrences.hasAttribute('data-filter')) {
-        dataFilter = JSON.parse(occurrences.getAttribute('data-filter'));
+    var checklist = document.querySelector('#checklist');
+    var dataFilter = { limit: 20 };
+    if (checklist.hasAttribute('data-filter')) {
+        dataFilter = JSON.parse(checklist.getAttribute('data-filter'));
     }
     return dataFilter;
 };
@@ -366,8 +287,6 @@ var getDataFilter = function () {
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
 
-    document.querySelector('#envelope').textContent = dataFilter.wktString;
-    document.querySelector('#polygon').textContent = dataFilter.geometry;
     document.querySelector('#checklist').setAttribute('data-filter', dataFilterString);
     document.location.hash = util.toHash(dataFilter);
 };
@@ -459,11 +378,10 @@ var init = function () {
 
     var updateLists = function () {
         clearChecklist();
-        updateOccurrences();
     };
 
     var addTaxonFilterElement = function (taxonName) {
-        var taxonDiv = document.createElement('span');
+        var taxonDiv = document.createElement('div');
         taxonDiv.setAttribute('class', 'taxonFilterElement');
         var removeButton = document.createElement('button');
 
@@ -473,6 +391,7 @@ var init = function () {
             updateLists();
         });
         removeButton.textContent = 'x';
+        removeButton.title = 'remove taxon selector';
 
         var taxonNameSpan = document.createElement('span');
         taxonNameSpan.setAttribute('class', 'taxonFilterElementName');
@@ -488,9 +407,11 @@ var init = function () {
 
         var removeTraitButton = document.createElement('button');
         removeTraitButton.textContent = 'x';
+        removeTraitButton.title = 'remove trait selector';
         removeTraitButton.addEventListener('click', function (event) {
             traitFilterElement.parentNode.removeChild(traitFilterElement);
             updateTraitSelector();
+            updateLists();
         });
         traitFilterElement.appendChild(removeTraitButton);
 
@@ -543,9 +464,14 @@ var init = function () {
     var addTraitButton = document.getElementById('addTraitSelector');
     if (addTraitButton) {
         addTraitButton.addEventListener('click', function (event) {
-            var traitSelectorInput = document.getElementById('traitSelector');
-            addTraitFilterElement(traitSelectorInput.value);
-            traitSelectorInput.value = '';
+            var traitValueElem = document.getElementById('traitValue');
+            var traitName = document.getElementById('traitName').value;
+            var traitOperator = document.getElementById('traitOperator').value;
+            var traitValue = traitValueElem.value;
+            var traitUnit = document.getElementById('traitUnit').value;
+            var traitSelector = [traitName, traitOperator, traitValue, traitUnit].join(' ');
+            addTraitFilterElement(traitSelector);
+            traitValueElem.value = '';
         });
 
     }
