@@ -481,7 +481,7 @@ var init = function () {
 
     function addAndUpdateTaxonSelector(taxonName, taxonSelectorInput) {
         updateLists();
-        addTaxonFilterElement(taxonName);
+        addTaxonFilterElement(util.capitalize(taxonName));
         taxonSelectorInput.value = '';
         removeChildren('#suggestions');
     }

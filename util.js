@@ -58,3 +58,15 @@ util.wktEnvelope = function(bounds) {
     bounds._southWest.lat].join(',') + ')';
 }
 
+util.capitalize = function(taxonName) {
+  var capitalizedName = taxonName;
+  if (taxonName) {
+    var parts = taxonName.split(' ');
+    var firstName = parts[0];
+    if (firstName.length > 0) {
+      parts[0] = firstName[0].toUpperCase().concat(firstName.slice(1));
+    }
+    capitalizedName = parts.join(' ');
+  }
+  return capitalizedName;
+}

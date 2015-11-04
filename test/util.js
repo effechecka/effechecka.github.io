@@ -40,3 +40,10 @@ test('normalize bounds', function(t) {
   var expectedBounds = { _northEast: {lat: 87.04309838968054, lng: 87.1875}, _southWest: { lat: 55.7765730186677, lng: 116.71875}};
   t.deepEqual(u.normBounds(arcticCanadaRussia), expectedBounds); 
 });
+
+test('capitalize', function(t) {
+  t.plan(3);
+  t.equal(u.capitalize('one two'), 'One two');
+  t.equal(u.capitalize('one'), 'One');
+  t.equal(u.capitalize('one Two'), 'One Two');
+});
