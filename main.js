@@ -91,7 +91,7 @@ function clearChecklist() {
 }
 
 var createChecklistURL = function (dataFilter) {
-    return 'http://apihack-c18.idigbio.org:8888/checklist' + Object.keys(dataFilter).filter(function (key) {
+    return 'http://apihack-c18.idigbio.org/checklist' + Object.keys(dataFilter).filter(function (key) {
         return ['taxonSelector', 'wktString', 'traitSelector', 'limit'].indexOf(key) != -1;
     }).reduce(function (accum, key) {
         if (dataFilter[key] !== null) {
