@@ -351,7 +351,6 @@ function getBoundsArea(areaSelect) {
 var updateBBox = function (areaSelect) {
     var bounds = getBoundsArea(areaSelect);
     var dataFilter = getDataFilter();
-    dataFilter.geometry = util.wktPolygon(bounds);
     dataFilter.wktString = util.wktEnvelope(bounds); 
 
     dataFilter.zoom = areaSelect.map.getZoom();
@@ -425,7 +424,7 @@ var init = function () {
     };
 
     var filterDefaults = 
-    { geometry: 'POLYGON((-69.949951171875 43.11702412135048,-69.949951171875 41.492120839687786,-72.147216796875 41.492120839687786,-72.147216796875 43.11702412135048,-69.949951171875 43.11702412135048))', hasSpatialIssue: 'false', height: '200', lat: '42.31', limit: '20', lng: '-71.05', scientificName: 'Aves,Insecta', taxonSelector: 'Aves,Insecta', traitSelector: 'bodyMass > 10 g,bodyMass < 1.0 kg', width: '200', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
+    { height: '200', lat: '42.31', limit: '20', lng: '-71.05', scientificName: 'Aves,Insecta', taxonSelector: 'Aves,Insecta', traitSelector: 'bodyMass > 10 g,bodyMass < 1.0 kg', width: '200', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
     
     var dataFilter = util.fromHash(document.location.hash, filterDefaults);
 

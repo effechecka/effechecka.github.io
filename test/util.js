@@ -26,14 +26,6 @@ test('wkt envelope', function(t) {
     , _southWest: { lat: 10, lng: 90 }}), 'ENVELOPE(90,-90,12,10)');
 });
 
-test('wkt polygon', function(t) {
-  t.plan(2);
-  t.equal(u.wktPolygon({ _northEast: { lat: 12, lng: 1 }
-    , _southWest: { lat: 10, lng: 0 }}), 'POLYGON((0 10,0 12,1 12,1 10,0 10))');
-  t.equal(u.wktPolygon({ _northEast: { lat: 12, lng: -90 }
-    , _southWest: { lat: 10, lng: 90 }}), 'POLYGON((90 10,90 12,-90 12,-90 10,90 10))');
-});
-
 test('normalize bounds', function(t) {
   t.plan(1);
   var arcticCanadaRussia = { _northEast: {lat: 87.04309838968054, lng: 87.1875}, _southWest: { lat: 55.7765730186677, lng: -243.28125}};

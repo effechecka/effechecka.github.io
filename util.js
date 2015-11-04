@@ -42,15 +42,6 @@ util.normBounds = function(bounds) {
     _southWest: { lat: sw.lat, lng: util.normLng(sw.lng) } };
 }
 
-util.wktPolygon = function(bounds) {
-  var wktPoints = bounds._southWest.lng + ' ' + bounds._southWest.lat              
-  + ',' + bounds._southWest.lng + ' ' + bounds._northEast.lat
-  + ',' + bounds._northEast.lng + ' ' + bounds._northEast.lat
-  + ',' + bounds._northEast.lng + ' ' + bounds._southWest.lat
-  + ',' + bounds._southWest.lng + ' ' + bounds._southWest.lat;
-  return 'POLYGON((' + wktPoints + '))';
-};
-
 util.wktEnvelope = function(bounds) {
   return 'ENVELOPE(' + [bounds._southWest.lng, 
     bounds._northEast.lng,
