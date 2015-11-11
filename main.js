@@ -325,7 +325,6 @@ function collectSelectors(selector) {
 function updateTaxonSelector() {
     var filterJoin = collectSelectors('.taxonFilterElementName');
     var filter = getDataFilter();
-    filter.scientificName = filterJoin;
     filter.taxonSelector = filterJoin;
     setDataFilter(filter);
 }
@@ -443,7 +442,7 @@ var init = function () {
     };
 
     var filterDefaults = 
-    { height: '200', lat: '42.31', limit: '20', lng: '-71.05', scientificName: 'Aves,Insecta', taxonSelector: 'Aves,Insecta', width: '200', traitSelector: '', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
+    { height: '200', lat: '42.31', limit: '20', lng: '-71.05', taxonSelector: 'Aves,Insecta', width: '200', traitSelector: '', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
     
     var dataFilter = util.fromHash(document.location.hash, filterDefaults);
 
@@ -468,7 +467,7 @@ var init = function () {
         updateLists();
     });
 
-    var taxonFilterNames = dataFilter.scientificName.split(',').filter(function(name) { return name.length > 0;});
+    var taxonFilterNames = dataFilter.taxonSelector.split(',').filter(function(name) { return name.length > 0;});
 
     taxonFilterNames.forEach(function (taxonName) {
         addTaxonFilterElement(taxonName);
