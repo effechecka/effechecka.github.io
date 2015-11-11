@@ -53,10 +53,6 @@ function renderChecklist(checklist, resp) {
         row.appendChild(recordCount);
         checklist.appendChild(row);
     });
-    var ellipsisRow = document.createElement('tr');
-    ellipsisRow.appendChild(createEllipsis());
-    ellipsisRow.appendChild(createEllipsis());
-    checklist.appendChild(ellipsisRow);
 }
 
 function xhr() {
@@ -254,11 +250,34 @@ var updateChecklist = function () {
                 if (req.status === 200) {
                     var resp = JSON.parse(req.responseText);
                     if (resp.items) {
-                        renderChecklist(checklist, resp);
+                        var checklist = document.querySelector('#checklist');
                         if (resp.items.length > 0) {
+                            renderChecklist(checklist, resp);
                             updateDownloadURL();
                         } else {
                             setChecklistStatus(resp.status);
+                            if (resp.status === 'ready') {
+                              var download = document.querySelector('#download');
+                              var msgElem = download.appendChild(document.createElement('span'));
+                              var msg = 'The checklist you\'ve requested contains no items. Bummer! You might want to try changing your search parameters';
+                            
+                              var simplifyButton = document.createElement('button');
+                              simplifyButton.textContent = 'removing your trait selectors';
+                              simplifyButton.title = 'remove your trait selectors';
+                              simplifyButton.addEventListener('click', function(event) {
+                                removeChildren('#traitFilter');
+                                updateTraitSelector();
+                                clearChecklist();
+                                updateChecklist();
+                              }, false);
+                              if (document.querySelector('.traitFilterElement')) {
+                                msgElem.textContent = msg + ' by ';
+                                download.appendChild(simplifyButton);
+                                download.appendChild(document.createElement('span')).textContent = '.';
+                              } else {
+                                msgElem.textContent = msg + '.';
+                              }
+                            }
                         }
                     }
                 } else {
