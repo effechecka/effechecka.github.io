@@ -152,7 +152,11 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
   if (pageIds.length > maxCollectionItems) {
     limit.value = maxCollectionItems;
   }
-  download.appendChild(document.createElement("span")).textContent = ' collection items.';
+  download.appendChild(document.createElement("span")).textContent = ' collection items. ';
+  var help = download.appendChild(document.createElement("a"));
+  help.setAttribute('href','https://github.com/jhpoelen/effechecka/wiki/About#saving-as-eol-collection');
+  help.setAttribute('target','_blank');
+  help.textContent = '?';
 
   saveAsCollection.addEventListener('click', function (event) {
     saveAsCollection.setAttribute('disabled', 'disabled');
