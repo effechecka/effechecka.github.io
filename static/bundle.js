@@ -255,16 +255,18 @@ var updateChecklist = function () {
                             renderChecklist(checklist, resp);
                             updateDownloadURL();
                         } else {
-                            setChecklistStatus(resp.status);
+                            var statusMap = { requested: "working on your checklist..." };
+                            var statusMsg = statusMap[resp.status] || resp.status; 
+                            setChecklistStatus(statusMsg);
                             if (resp.status === 'ready') {
                               var download = document.querySelector('#download');
                               var msgElem = download.appendChild(document.createElement('span'));
                               var msg = 'The checklist you\'ve requested contains no items. Bummer! You might want to try changing your search parameters';
                             
-                              var simplifyButton = document.createElement('button');
-                              simplifyButton.textContent = 'removing your trait selectors';
-                              simplifyButton.title = 'remove your trait selectors';
-                              simplifyButton.addEventListener('click', function(event) {
+                              var quickfixButton = document.createElement('button');
+                              quickfixButton.textContent = 'removing your trait selectors';
+                              quickfixButton.title = 'remove your trait selectors';
+                              quickfixButton.addEventListener('click', function(event) {
                                 removeChildren('#traitFilter');
                                 updateTraitSelector();
                                 clearChecklist();
@@ -272,7 +274,7 @@ var updateChecklist = function () {
                               }, false);
                               if (document.querySelector('.traitFilterElement')) {
                                 msgElem.textContent = msg + ' by ';
-                                download.appendChild(simplifyButton);
+                                download.appendChild(quickfixButton);
                                 download.appendChild(document.createElement('span')).textContent = '.';
                               } else {
                                 msgElem.textContent = msg + '.';
