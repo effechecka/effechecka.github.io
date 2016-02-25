@@ -17951,12 +17951,11 @@ taxon.saveAsCollection = function(callback, apiToken, ids, name, description) {
   xhr({
     body: reqBody,
     method: 'POST',
-    uri: 'http://effechecka-cors-proxy.herokuapp.com',
+    uri: 'http://eol.org/wapi/collections',
     headers: { 'Content-Type': 'application/json',
-      'Target-URL': 'http://eol.org/wapi/collections',
       'Authorization': 'Token token="' + apiToken + '"' }
     }, function (err, resp, body) {
-    if (resp.statusCode == 201) {
+    if (resp.statusCode == 200) {
       var collectionId = JSON.parse(body).id;
       callback(collectionId, resp, reqBody);
     } else {

@@ -9,7 +9,7 @@
     "globi-data": "^0.0.43",
     "leaflet": "^0.7.3",
     "query-string": "^2.3.0",
-    "taxon": "0.0.7",
+    "taxon": "0.0.8",
     "xhr": "^2.1.0"
   },
   "devDependencies": {
