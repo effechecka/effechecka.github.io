@@ -107,11 +107,15 @@ var addCSVDownloadLink = function (filename, label, csvString) {
   csvRef.textContent = label;
 }
 
+var quoteString = function(str) {
+  return ['"', str, '"'].join('');
+}
+
 var addChecklistDownloadLink = function (items) {
   var csvString = items.reduce(function (agg, item) {
     if (item.taxon && item.recordcount) {
-      var taxonName = util.lastNameFromPath(item.taxon);
-      agg = agg.concat([taxonName, item.taxon, item.recordcount].join(','));
+      var taxonName = quoteString(util.lastNameFromPath(item.taxon));
+      agg = agg.concat([taxonName, quoteString(item.taxon), item.recordcount].join(','));
     }
     return agg;
   }, ['taxon name,taxon path,record count']).join('\n');
