@@ -20,7 +20,7 @@
   "scripts": {
     "test": "tape test/*.js",
     "watch": "watchify main.js -o static/bundle.js -dv",
-    "build": "browserify main.js > static/bundle.js",
+    "build": "browserify -t brfs main.js > static/bundle.js",
     "publish": "npm run build && html-inline index.html | htmlbin"
   },
   "repository": {

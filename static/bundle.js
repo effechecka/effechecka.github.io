@@ -1,9 +1,12 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function (Buffer){
 var globiData = require('globi-data');
 var queryString = require('query-string');
 var L = require('leaflet');
 var taxon = require('taxon');
 var util = require('./util.js');
+
+var EventEmitter = require('events').EventEmitter;
 
 var effechecka = {};
 module.exports = effechecka;
@@ -15,7 +18,7 @@ function createEllipsis() {
 }
 
 var classNameFor = function (someString) {
-  return someString.replace(/\W/g, '_');
+    return someString.replace(/\W/g, '_');
 }
 
 function sepElem() {
@@ -85,7 +88,7 @@ var removeChildren = function (selector) {
 
 
 function clearChecklist() {
-    removeChildren('#checklist');
+    removeChildren(dataFilterId);
     removeChildren('#download');
     setChecklistStatus('none requested');
 }
@@ -102,127 +105,131 @@ var createChecklistURL = function (dataFilter) {
     }, '?');
 };
 
-var addCSVDownloadLink = function (filename, label, csvString) { 
-  var download = document.querySelector('#download');
-  download.appendChild(document.createElement("span")).textContent = ' or as ';
-  var csvRef = download.appendChild(document.createElement("a"));
-  csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
-  csvRef.setAttribute('download', filename)
-  csvRef.textContent = label;
+var addCSVDownloadLink = function (filename, label, csvString) {
+    var download = document.querySelector('#download');
+    download.appendChild(document.createElement("span")).textContent = ' or as ';
+    var csvRef = download.appendChild(document.createElement("a"));
+    csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
+    csvRef.setAttribute('download', filename)
+    csvRef.textContent = label;
 }
 
-var quoteString = function(str) {
-  return ['"', str, '"'].join('');
+var quoteString = function (str) {
+    return ['"', str, '"'].join('');
 }
 
 var addChecklistDownloadLink = function (items) {
-  var csvString = items.reduce(function (agg, item) {
-    if (item.taxon && item.recordcount) {
-      var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-      agg = agg.concat([taxonName, quoteString(item.taxon), item.recordcount].join(','));
-    }
-    return agg;
-  }, ['taxon name,taxon path,record count']).join('\n');
-  addCSVDownloadLink('checklist.csv', 'csv', csvString);
+    var csvString = items.reduce(function (agg, item) {
+        if (item.taxon && item.recordcount) {
+            var taxonName = quoteString(util.lastNameFromPath(item.taxon));
+            agg = agg.concat([taxonName, quoteString(item.taxon), item.recordcount].join(','));
+        }
+        return agg;
+    }, ['taxon name,taxon path,record count']).join('\n');
+    addCSVDownloadLink('checklist.csv', 'csv', csvString);
 }
 
-var onNameAndPageIds = function(nameAndPageIds) {
-  addDownloadAsEOLIdsLink(nameAndPageIds);
-  addHyperlinksForNames(nameAndPageIds);
+var onNameAndPageIds = function (nameAndPageIds) {
+    addDownloadAsEOLIdsLink(nameAndPageIds);
+    addHyperlinksForNames(nameAndPageIds);
 }
 
-var addHyperlinksForNames = function(nameAndPageIds) {
-  nameAndPageIds.forEach(function(nameAndPageId) {
-    var elemId = classNameFor(nameAndPageId.name);
-    var selector = '.' + elemId;
-    var elems = document.querySelectorAll(selector);
-    var index = 0;
-    for(index=0; index < elems.length; index++) {
-      var elem = elems[index];
-      var linkElem = document.createElement('a');
-      linkElem.setAttribute('class', elemId);
-      linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
-      linkElem.textContent = nameAndPageId.name;
-      linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
-      var elemParent = elem.parentNode;
-      elemParent.insertBefore(linkElem, elem);
-      elemParent.removeChild(elem);
-    }
-  });
+var addHyperlinksForNames = function (nameAndPageIds) {
+    nameAndPageIds.forEach(function (nameAndPageId) {
+        var elemId = classNameFor(nameAndPageId.name);
+        var selector = '.' + elemId;
+        var elems = document.querySelectorAll(selector);
+        var index = 0;
+        for (index = 0; index < elems.length; index++) {
+            var elem = elems[index];
+            var linkElem = document.createElement('a');
+            linkElem.setAttribute('class', elemId);
+            linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
+            linkElem.textContent = nameAndPageId.name;
+            linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
+            var elemParent = elem.parentNode;
+            elemParent.insertBefore(linkElem, elem);
+            elemParent.removeChild(elem);
+        }
+    });
 }
 
 var addDownloadAsEOLIdsLink = function (nameAndPageIds) {
-  var pageIds = nameAndPageIds.map(function(nameAndPageId) { return nameAndPageId.id });
-  setChecklistStatus('ready'); 
-  var maxCollectionItems = 10;
-  addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
-  var download = document.querySelector('#download');
-  download.setAttribute('data-name-and-page-ids', JSON.stringify(nameAndPageIds));
-  download.appendChild(document.createElement("span")).textContent = ' or ';
-  var saveAsCollection = download.appendChild(document.createElement("button"));
-  saveAsCollection.textContent = 'save as EOL Collection';
-  
-  download.appendChild(document.createElement("span")).textContent = ' with title ';
-  var collectionTitle = download.appendChild(document.createElement("input"));
-  collectionTitle.setAttribute('id','collectionTitle');
-  collectionTitle.setAttribute('placeholder','enter title');
-  
-  download.appendChild(document.createElement("span")).textContent = ' and description ';
-  var collectionDescription = download.appendChild(document.createElement("input"));
-  collectionDescription.setAttribute('id','collectionDescription');
-  collectionDescription.setAttribute('placeholder','enter description');
-  
-  download.appendChild(document.createElement("span")).innerHTML = ' using <a href="https://github.com/jhpoelen/effechecka/wiki/Save-Checklist-To-EOL-Collection" target="_blank">api key</a> ';
-  var apiKeyInput = download.appendChild(document.createElement("input"));
-  apiKeyInput.setAttribute('id', 'apiKey');
-  apiKeyInput.setAttribute('placeholder', 'EOL api key');
-  
-  download.appendChild(document.createElement("span")).textContent = ' limit to ';
-  var limit = download.appendChild(document.createElement("input"));
-  limit.setAttribute('id', 'collectionLimit');
-  limit.setAttribute('type', 'number');
-  limit.setAttribute('min', '1');
-  limit.value = pageIds;
-  if (pageIds.length > maxCollectionItems) {
-    limit.value = maxCollectionItems;
-  }
-  download.appendChild(document.createElement("span")).textContent = ' collection items. ';
-  var help = download.appendChild(document.createElement("a"));
-  help.setAttribute('href','https://github.com/jhpoelen/effechecka/wiki/About#saving-as-eol-collection');
-  help.setAttribute('target','_blank');
-  help.textContent = '?';
+    var pageIds = nameAndPageIds.map(function (nameAndPageId) {
+        return nameAndPageId.id
+    });
+    setChecklistStatus('ready');
+    var maxCollectionItems = 10;
+    addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
+    var download = document.querySelector('#download');
+    download.setAttribute('data-name-and-page-ids', JSON.stringify(nameAndPageIds));
+    download.appendChild(document.createElement("span")).textContent = ' or ';
+    var saveAsCollection = download.appendChild(document.createElement("button"));
+    saveAsCollection.textContent = 'save as EOL Collection';
 
-  saveAsCollection.addEventListener('click', function (event) {
-    saveAsCollection.setAttribute('disabled', 'disabled');
-    var saveStatus = document.querySelector('#saveStatus');
-    if (!saveStatus) {
-      saveStatus = download.appendChild(document.createElement("span"));
-      saveStatus.setAttribute('id', 'saveStatus');
-    }
-    saveStatus.innerHTML = ' Collection saving...';
-    var pageIds = JSON.parse(document.querySelector('#download').dataset.nameAndPageIds).map(function(item) { return parseInt(item.id); });
-    var apiKey = document.querySelector('#apiKey').value;
-    var title = document.querySelector('#collectionTitle').value;
-    var description = document.querySelector('#collectionDescription').value;
-    description = description.trim().replace(/\.+$/,'');
-    description = description.concat('. Re-create this <a href="' + window.location.href + '">regional search</a> with currently available data.');
+    download.appendChild(document.createElement("span")).textContent = ' with title ';
+    var collectionTitle = download.appendChild(document.createElement("input"));
+    collectionTitle.setAttribute('id', 'collectionTitle');
+    collectionTitle.setAttribute('placeholder', 'enter title');
 
-    var maxElements = parseInt(document.querySelector('#collectionLimit').value);
-    if (!maxElements) {
-      maxElements = 30;
+    download.appendChild(document.createElement("span")).textContent = ' and description ';
+    var collectionDescription = download.appendChild(document.createElement("input"));
+    collectionDescription.setAttribute('id', 'collectionDescription');
+    collectionDescription.setAttribute('placeholder', 'enter description');
+
+    download.appendChild(document.createElement("span")).innerHTML = ' using <a href="https://github.com/jhpoelen/effechecka/wiki/Save-Checklist-To-EOL-Collection" target="_blank">api key</a> ';
+    var apiKeyInput = download.appendChild(document.createElement("input"));
+    apiKeyInput.setAttribute('id', 'apiKey');
+    apiKeyInput.setAttribute('placeholder', 'EOL api key');
+
+    download.appendChild(document.createElement("span")).textContent = ' limit to ';
+    var limit = download.appendChild(document.createElement("input"));
+    limit.setAttribute('id', 'collectionLimit');
+    limit.setAttribute('type', 'number');
+    limit.setAttribute('min', '1');
+    limit.value = pageIds;
+    if (pageIds.length > maxCollectionItems) {
+        limit.value = maxCollectionItems;
     }
-    var limitedPageIds = pageIds.slice(0, maxElements);
-    taxon.saveAsCollection(function(collectionId) {
-      var collectionURL = 'http://eol.org/collections/' + collectionId;
-      var saveStatusHTML = ' Collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
-      if (!collectionId) {
-        saveStatusHTML = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > ' + maxCollectionItems + ' items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
-      }
-      document.querySelector('#saveStatus').innerHTML = saveStatusHTML; 
-      saveAsCollection.removeAttribute('disabled');
-    }, 
-    apiKey, limitedPageIds, title, description);
-  }, false);
+    download.appendChild(document.createElement("span")).textContent = ' collection items. ';
+    var help = download.appendChild(document.createElement("a"));
+    help.setAttribute('href', 'https://github.com/jhpoelen/effechecka/wiki/About#saving-as-eol-collection');
+    help.setAttribute('target', '_blank');
+    help.textContent = '?';
+
+    saveAsCollection.addEventListener('click', function (event) {
+        saveAsCollection.setAttribute('disabled', 'disabled');
+        var saveStatus = document.querySelector('#saveStatus');
+        if (!saveStatus) {
+            saveStatus = download.appendChild(document.createElement("span"));
+            saveStatus.setAttribute('id', 'saveStatus');
+        }
+        saveStatus.innerHTML = ' Collection saving...';
+        var pageIds = JSON.parse(document.querySelector('#download').dataset.nameAndPageIds).map(function (item) {
+            return parseInt(item.id);
+        });
+        var apiKey = document.querySelector('#apiKey').value;
+        var title = document.querySelector('#collectionTitle').value;
+        var description = document.querySelector('#collectionDescription').value;
+        description = description.trim().replace(/\.+$/, '');
+        description = description.concat('. Re-create this <a href="' + window.location.href + '">regional search</a> with currently available data.');
+
+        var maxElements = parseInt(document.querySelector('#collectionLimit').value);
+        if (!maxElements) {
+            maxElements = 30;
+        }
+        var limitedPageIds = pageIds.slice(0, maxElements);
+        taxon.saveAsCollection(function (collectionId) {
+                var collectionURL = 'http://eol.org/collections/' + collectionId;
+                var saveStatusHTML = ' Collection saved at <a href="' + collectionURL + '">' + collectionURL + '</a>.';
+                if (!collectionId) {
+                    saveStatusHTML = ' Failed to save collection. Bummer! This is probably a <a href="https://github.com/EOL/tramea/issues/35">known issue</a> that prevents saving > ' + maxCollectionItems + ' items to a EOL checklist. However, if your list contains only a few items and you are seeing this message, please check <a href="https://github.com/jhpoelen/effechecka/issues/">our open issues</a> first, before reporting a new one.';
+                }
+                document.querySelector('#saveStatus').innerHTML = saveStatusHTML;
+                saveAsCollection.removeAttribute('disabled');
+            },
+            apiKey, limitedPageIds, title, description);
+    }, false);
 
 }
 
@@ -252,19 +259,19 @@ var updateDownloadURL = function () {
                     if (resp.items) {
                         var header = document.querySelector('#checklistHeader');
                         if (header) {
-                          var headerText = resp.items.length + ' checklist items';
-                          if (resp.items.length > 20) {
-                            headerText = headerText.concat(' (first 20 shown)');
-                          }
-                          header.textContent = headerText;
+                            var headerText = resp.items.length + ' checklist items';
+                            if (resp.items.length > 20) {
+                                headerText = headerText.concat(' (first 20 shown)');
+                            }
+                            header.textContent = headerText;
                         }
                         addChecklistDownloadLink(resp.items);
 
-                        var names = resp.items.reduce(function(agg, item) { 
-                          if (item.taxon) {
-                            agg = agg.concat(util.lastNameFromPath(item.taxon));  
-                          }
-                          return agg;
+                        var names = resp.items.reduce(function (agg, item) {
+                            if (item.taxon) {
+                                agg = agg.concat(util.lastNameFromPath(item.taxon));
+                            }
+                            return agg;
                         }, []);
                         setChecklistStatus('linking to eol pages...');
                         taxon.eolPageIdsFor(names, onNameAndPageIds);
@@ -293,29 +300,29 @@ var updateChecklist = function () {
                             updateDownloadURL();
                         } else {
                             var statusMap = { requested: "working on your checklist..." };
-                            var statusMsg = statusMap[resp.status] || resp.status; 
+                            var statusMsg = statusMap[resp.status] || resp.status;
                             setChecklistStatus(statusMsg);
                             if (resp.status === 'ready') {
-                              var download = document.querySelector('#download');
-                              var msgElem = download.appendChild(document.createElement('span'));
-                              var msg = 'The checklist you\'ve requested contains no items. Bummer! You might want to try changing your search parameters';
-                            
-                              var quickfixButton = document.createElement('button');
-                              quickfixButton.textContent = 'removing your trait selectors';
-                              quickfixButton.title = 'remove your trait selectors';
-                              quickfixButton.addEventListener('click', function(event) {
-                                removeChildren('#traitFilter');
-                                updateTraitSelector();
-                                clearChecklist();
-                                updateChecklist();
-                              }, false);
-                              if (document.querySelector('.traitFilterElement')) {
-                                msgElem.textContent = msg + ' by ';
-                                download.appendChild(quickfixButton);
-                                download.appendChild(document.createElement('span')).textContent = '.';
-                              } else {
-                                msgElem.textContent = msg + '.';
-                              }
+                                var download = document.querySelector('#download');
+                                var msgElem = download.appendChild(document.createElement('span'));
+                                var msg = 'The checklist you\'ve requested contains no items. Bummer! You might want to try changing your search parameters';
+
+                                var quickfixButton = document.createElement('button');
+                                quickfixButton.textContent = 'removing your trait selectors';
+                                quickfixButton.title = 'remove your trait selectors';
+                                quickfixButton.addEventListener('click', function (event) {
+                                    removeChildren('#traitFilter');
+                                    updateTraitSelector();
+                                    clearChecklist();
+                                    updateChecklist();
+                                }, false);
+                                if (document.querySelector('.traitFilterElement')) {
+                                    msgElem.textContent = msg + ' by ';
+                                    download.appendChild(quickfixButton);
+                                    download.appendChild(document.createElement('span')).textContent = '.';
+                                } else {
+                                    msgElem.textContent = msg + '.';
+                                }
                             }
                         }
                     }
@@ -334,8 +341,10 @@ var setChecklistStatus = function (status) {
     document.querySelector('#checklistStatus').textContent = status;
 };
 
+var dataFilterId = '#checklist';
+
 var getDataFilter = function () {
-    var checklist = document.querySelector('#checklist');
+    var checklist = document.querySelector(dataFilterId);
     var dataFilter = { limit: 20 };
     if (checklist.hasAttribute('data-filter')) {
         dataFilter = JSON.parse(checklist.getAttribute('data-filter'));
@@ -346,7 +355,7 @@ var getDataFilter = function () {
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
 
-    document.querySelector('#checklist').setAttribute('data-filter', dataFilterString);
+    document.querySelector(dataFilterId).setAttribute('data-filter', dataFilterString);
     document.location.hash = util.toHash(dataFilter);
 };
 
@@ -377,39 +386,39 @@ function updateTraitSelector() {
 }
 
 function getBoundsArea(areaSelect) {
-  var size = areaSelect.map.getSize();
-  var topRight = new L.Point();
-  var bottomLeft = new L.Point();
-  // this only holds when the size of the map lies within the container
+    var size = areaSelect.map.getSize();
+    var topRight = new L.Point();
+    var bottomLeft = new L.Point();
+    // this only holds when the size of the map lies within the container
 
-  bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
-  topRight.y = Math.round((size.y - areaSelect._height) / 2);
-  topRight.x = size.x - bottomLeft.x;
-  bottomLeft.y = size.y - topRight.y;
-  var northPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(90, 0)).y;
-  var southPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(-90, 0)).y;
-  var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
-  if (bottomLeft.y > southPoleY) {
-    sw.lat = -90;
-  } 
-  if (bottomLeft.y < northPoleY) {
-    sw.lat = 90;
-  }
-  var ne = areaSelect.map.containerPointToLatLng(topRight);
-  // for some reason, latLngToContainerPoint(...) doesn't make sharp cut at poles.
-  if (topRight.y < northPoleY) {
-    ne.lat = 90;  
-  }
-  if (topRight.y > southPoleY) {
-    sw.lat = -90;
-  }
-  return util.normBounds(new L.LatLngBounds(sw, ne));
+    bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
+    topRight.y = Math.round((size.y - areaSelect._height) / 2);
+    topRight.x = size.x - bottomLeft.x;
+    bottomLeft.y = size.y - topRight.y;
+    var northPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(90, 0)).y;
+    var southPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(-90, 0)).y;
+    var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
+    if (bottomLeft.y > southPoleY) {
+        sw.lat = -90;
+    }
+    if (bottomLeft.y < northPoleY) {
+        sw.lat = 90;
+    }
+    var ne = areaSelect.map.containerPointToLatLng(topRight);
+    // for some reason, latLngToContainerPoint(...) doesn't make sharp cut at poles.
+    if (topRight.y < northPoleY) {
+        ne.lat = 90;
+    }
+    if (topRight.y > southPoleY) {
+        sw.lat = -90;
+    }
+    return util.normBounds(new L.LatLngBounds(sw, ne));
 }
 
 var updateBBox = function (areaSelect) {
     var bounds = getBoundsArea(areaSelect);
     var dataFilter = getDataFilter();
-    dataFilter.wktString = util.wktEnvelope(bounds); 
+    dataFilter.wktString = util.wktEnvelope(bounds);
 
     dataFilter.zoom = areaSelect.map.getZoom();
     dataFilter.lat = areaSelect.map.getCenter().lat;
@@ -420,22 +429,8 @@ var updateBBox = function (areaSelect) {
     setDataFilter(dataFilter);
 };
 
-var init = function () {
-    var addRequestHandler = function (buttonId) {
-        var checklistButton = document.querySelector(buttonId);
-        checklistButton.addEventListener('click', function (event) {
-            updateChecklist();
-        }, false);
-    };
-
-    clearChecklist();
-    ['#requestChecklist', '#refreshChecklist'].forEach(function (id) {
-        addRequestHandler(id)
-    });
-
-    var updateLists = function () {
-        clearChecklist();
-    };
+var createSelectors = function () {
+    var ee = new EventEmitter();
 
     var addTaxonFilterElement = function (taxonName) {
         var taxonDiv = document.createElement('div');
@@ -445,7 +440,7 @@ var init = function () {
         removeButton.addEventListener('click', function (event) {
             taxonDiv.parentNode.removeChild(taxonDiv);
             updateTaxonSelector();
-            updateLists();
+            ee.emit('update');
         });
         removeButton.textContent = 'x';
         removeButton.title = 'remove taxon selector';
@@ -468,7 +463,7 @@ var init = function () {
         removeTraitButton.addEventListener('click', function (event) {
             traitFilterElement.parentNode.removeChild(traitFilterElement);
             updateTraitSelector();
-            updateLists();
+            ee.emit('update');
         });
         traitFilterElement.appendChild(removeTraitButton);
 
@@ -481,9 +476,9 @@ var init = function () {
         updateTraitSelector();
     };
 
-    var filterDefaults = 
+    var filterDefaults =
     { height: '200', lat: '42.31', limit: '20', lng: '-71.05', taxonSelector: 'Aves,Insecta', width: '200', traitSelector: '', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
-    
+
     var dataFilter = util.fromHash(document.location.hash, filterDefaults);
 
     var zoom = parseInt(dataFilter.zoom);
@@ -504,16 +499,20 @@ var init = function () {
     areaSelect.addTo(map);
     areaSelect.on("change", function () {
         updateBBox(this);
-        updateLists();
+        ee.emit('update');
     });
 
-    var taxonFilterNames = dataFilter.taxonSelector.split(',').filter(function(name) { return name.length > 0;});
+    var taxonFilterNames = dataFilter.taxonSelector.split(',').filter(function (name) {
+        return name.length > 0;
+    });
 
     taxonFilterNames.forEach(function (taxonName) {
         addTaxonFilterElement(taxonName);
     });
 
-    var traitFilters = dataFilter.traitSelector.split(',').filter(function(name) { return name.length > 0;});
+    var traitFilters = dataFilter.traitSelector.split(',').filter(function (name) {
+        return name.length > 0;
+    });
     traitFilters.forEach(function (traitFilter) {
         addTraitFilterElement(traitFilter);
     });
@@ -527,7 +526,7 @@ var init = function () {
             var traitValue = traitValueElem.value;
             var traitUnit = document.getElementById('traitUnit').value;
             var traitSelector = [traitName, traitOperator, traitValue, traitUnit].join(' ');
-            updateLists();
+            ee.emit('update');
             addTraitFilterElement(traitSelector);
             traitValueElem.value = '';
         });
@@ -537,7 +536,7 @@ var init = function () {
     var addTaxonButton = document.getElementById('addTaxonSelector');
 
     function addAndUpdateTaxonSelector(taxonName, taxonSelectorInput) {
-        updateLists();
+        ee.emit('update');
         addTaxonFilterElement(util.capitalize(taxonName));
         taxonSelectorInput.value = '';
         removeChildren('#suggestions');
@@ -578,18 +577,67 @@ var init = function () {
         }
     };
 
-    updateTaxonSelector();
-    updateTraitSelector();
-    updateBBox(areaSelect);
-    updateLists();
-    updateChecklist();
+    ee.init = function () {
+        updateTaxonSelector();
+        updateTraitSelector();
+        updateBBox(areaSelect);
+        ee.emit('ready');
+    };
+
+    return ee;
 }
 
+var createChecklist = function (selector) {
+    var addRequestHandler = function (buttonId) {
+        var checklistButton = document.querySelector(buttonId);
+        checklistButton.addEventListener('click', function (event) {
+            updateChecklist();
+        }, false);
+    };
+
+    clearChecklist();
+    ['#requestChecklist', '#refreshChecklist'].forEach(function (id) {
+        addRequestHandler(id)
+    });
+
+    var updateLists = function () {
+        clearChecklist();
+    };
+
+    selector.on('update', function () {
+        updateLists();
+    });
+
+    selector.on('ready', function () {
+        updateLists();
+        updateChecklist();
+    });
+};
+
+var initSelectorHtml = function () {
+    var selector = document.getElementById('effechecka-selector');
+    if (selector) {
+        selector.innerHTML = Buffer("PGRpdiBpZD0ibWFwIiBzdHlsZT0id2lkdGg6IDYwMHB4OyBoZWlnaHQ6IDQwMHB4Ij48L2Rpdj4KPGJyLz4KCjxkaXYgaWQ9InRheG9uRmlsdGVyIj48L2Rpdj4KPGRpdiBpZD0idGF4b25TZWxlY3RvciI+CiAgICA8aW5wdXQgaWQ9InRheG9uU2VsZWN0b3JJbnB1dCIgY2xhc3M9ImVkaXRhYmxlIGNlbnRlcmVkIiB0eXBlPSJ0ZXh0IiBwbGFjZWhvbGRlcj0iYWRkIHRheGEiIGF1dG9jb21wbGV0ZT0ib2ZmIj4KICAgIDxidXR0b24gaWQ9ImFkZFRheG9uU2VsZWN0b3IiIHRpdGxlPSJhZGQgdGF4b24gc2VsZWN0b3IiPis8L2J1dHRvbj4KICAgIDxhIHRhcmdldD0iX2JsYW5rIiBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I3RheG9uLXNlbGVjdG9yIiB0YXJnZXQ9Il9ibGFuayI+PzwvYT4KICAgIDx1bCBpZD0ic3VnZ2VzdGlvbnMiPjwvdWw+CjwvZGl2PgoKPGRpdiBpZD0idHJhaXRGaWx0ZXIiPjwvZGl2PgoKPGRpdiBpZD0idHJhaXRFZGl0b3IiPgogICAgPHNlbGVjdCBpZD0idHJhaXROYW1lIj48b3B0aW9uIHZhbHVlPSJib2R5TWFzcyI+Ym9keSBtYXNzPC9vcHRpb24+PC9zZWxlY3Q+PHNlbGVjdCBpZD0idHJhaXRPcGVyYXRvciI+PG9wdGlvbiB2YWx1ZT0iJmx0Ij4mbHQ8L29wdGlvbj48b3B0aW9uIHZhbHVlPSImZ3QiPiZndDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ij09Ij49PTwvb3B0aW9uPjwvc2VsZWN0PgogICAgPGlucHV0IGlkPSJ0cmFpdFZhbHVlIiB0eXBlPSJudW1lcmljIiBwbGFjZWhvbGRlcj0iZW50ZXIgdHJhaXQgdmFsdWUiIGF1dG9jb21wbGV0ZT0ib2ZmIi8+CiAgICA8c2VsZWN0IGlkPSJ0cmFpdFVuaXQiPjxvcHRpb24gdmFsdWU9ImciPmc8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJrZyI+a2c8L29wdGlvbj48b3B0aW9uIHZhbHVlPSIiPm5vIHVuaXQ8L29wdGlvbj48L3NlbGVjdD4KICAgIDxidXR0b24gaWQ9ImFkZFRyYWl0U2VsZWN0b3IiIHRpdGxlPSJhZGQgdHJhaXQgc2VsZWN0b3IiPis8L2J1dHRvbj4KICAgIDxhIHRhcmdldD0iX2JsYW5rIiBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I3RyYWl0LXNlbGVjdG9yIiB0YXJnZXQ9Il9ibGFuayI+PzwvYT4KPC9kaXY+Cg==","base64");
+    }
+};
+
+var initChecklistHtml = function () {
+    var checklist = document.getElementById('effechecka-checklist');
+    if (checklist) {
+        checklist.innerHTML = Buffer("PGRpdiBpZD0iY2hlY2tsaXN0LWNvbnRyb2xzIj4KICAgIDxidXR0b24gaWQ9InJlcXVlc3RDaGVja2xpc3QiPnJlcXVlc3QgY2hlY2tsaXN0PC9idXR0b24+CiAgICBjaGVja2xpc3Qgc3RhdHVzOiBbPGI+PHNwYW4gaWQ9ImNoZWNrbGlzdFN0YXR1cyI+PC9zcGFuPjwvYj5dCiAgICA8YnV0dG9uIGlkPSJyZWZyZXNoQ2hlY2tsaXN0Ij5yZWZyZXNoPC9idXR0b24+CiAgICA8YSBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I2NoZWNrbGlzdCIgdGFyZ2V0PSJfYmxhbmsiPj88L2E+Cgo8L2Rpdj4KPGRpdiBpZD0iY2hlY2tsaXN0LXJlc3VsdHMiPgogICAgPGJyLz4KICAgIDxkaXYgaWQ9ImRvd25sb2FkIj48L2Rpdj4KICAgIDxici8+CiAgICA8dGFibGUgaWQ9ImNoZWNrbGlzdCI+PC90YWJsZT4KPC9kaXY+","base64");
+    }
+};
+
 window.addEventListener('load', function () {
-    init();
+    initSelectorHtml();
+    initChecklistHtml();
+    var selector = createSelectors();
+    createChecklist(selector);
+    selector.init();
 });
 
-},{"./util.js":54,"globi-data":39,"leaflet":41,"query-string":42,"taxon":44}],2:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"./util.js":54,"buffer":4,"events":8,"globi-data":39,"leaflet":41,"query-string":42,"taxon":44}],2:[function(require,module,exports){
 
 },{}],3:[function(require,module,exports){
 arguments[4][2][0].apply(exports,arguments)
