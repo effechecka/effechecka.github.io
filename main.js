@@ -36,10 +36,9 @@ function renderChecklist(checklist, resp) {
             if (pathPartValue.length == 0) {
                 return pathFull.concat([sepElem()]);
             } else {
-                var pathPartElem = document.createElement('a');
-                pathPartElem.setAttribute('href', 'http://eol.org/' + pathPartValue);
+                var pathPartElem = document.createElement('span');
+                pathPartElem.setAttribute('id', encodeURIComponent(pathPartValue));
                 pathPartElem.textContent = pathPartValue;
-                pathPartElem.setAttribute('title', 'search EOL for [' + pathPartValue + '] by name');
                 return pathFull.concat([pathPartElem, sepElem()])
             }
         }, []);
@@ -122,12 +121,35 @@ var addChecklistDownloadLink = function (items) {
   addCSVDownloadLink('checklist.csv', 'csv', csvString);
 }
 
-var addDownloadAsEOLIdsLink = function (pageIds) {
+var onNameAndPageIds = function(nameAndPageIds) {
+  addDownloadAsEOLIdsLink(nameAndPageIds);
+  addHyperlinksForNames(nameAndPageIds);
+}
+
+var addHyperlinksForNames = function(nameAndPageIds) {
+  nameAndPageIds.forEach(function(nameAndPageId) {
+    var elemId = encodeURIComponent(nameAndPageId.name);
+    var elem = document.getElementById(elemId);
+    if (elem) { 
+      var linkElem = document.createElement('a');
+      linkElem.setAttribute('id', elemId);
+      linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
+      linkElem.textContent = nameAndPageId.name;
+      linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
+      var elemParent = elem.parentNode;
+      elemParent.insertBefore(linkElem, elem);
+      elemParent.removeChild(elem);
+    }
+  });
+}
+
+var addDownloadAsEOLIdsLink = function (nameAndPageIds) {
+  var pageIds = nameAndPageIds.map(function(nameAndPageId) { return nameAndPageId.id });
   setChecklistStatus('ready'); 
   var maxCollectionItems = 10;
   addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
   var download = document.querySelector('#download');
-  download.setAttribute('data-eol-page-ids', JSON.stringify(pageIds));
+  download.setAttribute('data-name-and-page-ids', JSON.stringify(nameAndPageIds));
   download.appendChild(document.createElement("span")).textContent = ' or ';
   var saveAsCollection = download.appendChild(document.createElement("button"));
   saveAsCollection.textContent = 'save as EOL Collection';
@@ -170,7 +192,7 @@ var addDownloadAsEOLIdsLink = function (pageIds) {
       saveStatus.setAttribute('id', 'saveStatus');
     }
     saveStatus.innerHTML = ' Collection saving...';
-    var pageIds = JSON.parse(document.querySelector('#download').dataset.eolPageIds).map(function(item) { return parseInt(item); });
+    var pageIds = JSON.parse(document.querySelector('#download').dataset.nameAndPageIds).map(function(item) { return parseInt(item.id); });
     var apiKey = document.querySelector('#apiKey').value;
     var title = document.querySelector('#collectionTitle').value;
     var description = document.querySelector('#collectionDescription').value;
@@ -237,7 +259,7 @@ var updateDownloadURL = function () {
                           return agg;
                         }, []);
                         setChecklistStatus('linking to eol pages...');
-                        taxon.eolPageIdsFor(names, addDownloadAsEOLIdsLink);
+                        taxon.eolPageIdsFor(names, onNameAndPageIds);
                     }
                 }
             }
