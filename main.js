@@ -13,6 +13,10 @@ function createEllipsis() {
     return ellipsis;
 }
 
+var classNameFor = function (someString) {
+  return someString.replace(/\W/g, '_');
+}
+
 function sepElem() {
     var sepElem = document.createElement('span');
     sepElem.textContent = ' | ';
@@ -37,7 +41,7 @@ function renderChecklist(checklist, resp) {
                 return pathFull.concat([sepElem()]);
             } else {
                 var pathPartElem = document.createElement('span');
-                pathPartElem.setAttribute('id', encodeURIComponent(pathPartValue));
+                pathPartElem.setAttribute('class', classNameFor(pathPartValue));
                 pathPartElem.textContent = pathPartValue;
                 return pathFull.concat([pathPartElem, sepElem()])
             }
@@ -128,11 +132,14 @@ var onNameAndPageIds = function(nameAndPageIds) {
 
 var addHyperlinksForNames = function(nameAndPageIds) {
   nameAndPageIds.forEach(function(nameAndPageId) {
-    var elemId = encodeURIComponent(nameAndPageId.name);
-    var elem = document.getElementById(elemId);
-    if (elem) { 
+    var elemId = classNameFor(nameAndPageId.name);
+    var selector = '.' + elemId;
+    var elems = document.querySelectorAll(selector);
+    var index = 0;
+    for(index=0; index < elems.length; index++) {
+      var elem = elems[index];
       var linkElem = document.createElement('a');
-      linkElem.setAttribute('id', elemId);
+      linkElem.setAttribute('class', elemId);
       linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
       linkElem.textContent = nameAndPageId.name;
       linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
