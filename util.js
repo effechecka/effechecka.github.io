@@ -5,6 +5,14 @@ var util = {};
 
 module.exports = util;
 
+util.removeChildren = function (selector) {
+    var checklist = document.querySelector(selector);
+    while (checklist && checklist.firstChild) {
+        checklist.removeChild(checklist.firstChild);
+    }
+    return checklist;
+};
+
 util.fromHash = function(hash, defaultFilter) {
   var filter = defaultFilter || {};
   return extend(defaultFilter, queryString.parse(hash));

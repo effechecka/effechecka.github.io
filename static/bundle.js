@@ -1,31 +1,23 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (Buffer){
-var globiData = require('globi-data');
-var queryString = require('query-string');
-var L = require('leaflet');
-var taxon = require('taxon');
+
 var util = require('./util.js');
+var taxon = require('taxon');
 
-var EventEmitter = require('events').EventEmitter;
+var checklist = {};
+module.exports = checklist;
 
-var effechecka = {};
-module.exports = effechecka;
-
-function createEllipsis() {
-    var ellipsis = document.createElement('td');
-    ellipsis.textContent = '...';
-    return ellipsis;
-}
 
 var classNameFor = function (someString) {
     return someString.replace(/\W/g, '_');
-}
+};
 
 function sepElem() {
     var sepElem = document.createElement('span');
     sepElem.textContent = ' | ';
     return sepElem;
 }
+
 function renderChecklist(checklist, resp) {
     checklist.setAttribute('data-results', resp.results);
     var headerRow = document.createElement('tr');
@@ -78,18 +70,9 @@ function xhr() {
     return req;
 }
 
-var removeChildren = function (selector) {
-    var checklist = document.querySelector(selector);
-    while (checklist && checklist.firstChild) {
-        checklist.removeChild(checklist.firstChild);
-    }
-    return checklist;
-};
-
-
 function clearChecklist() {
-    removeChildren(dataFilterId);
-    removeChildren('#download');
+    util.removeChildren('#checklist');
+    util.removeChildren('#download');
     setChecklistStatus('none requested');
 }
 
@@ -139,7 +122,6 @@ var addHyperlinksForNames = function (nameAndPageIds) {
         var elemId = classNameFor(nameAndPageId.name);
         var selector = '.' + elemId;
         var elems = document.querySelectorAll(selector);
-        var index = 0;
         for (index = 0; index < elems.length; index++) {
             var elem = elems[index];
             var linkElem = document.createElement('a');
@@ -233,10 +215,10 @@ var addDownloadAsEOLIdsLink = function (nameAndPageIds) {
 
 }
 
-var updateDownloadURL = function () {
-    removeChildren("#download");
+var updateDownloadURL = function (selector) {
+    util.removeChildren("#download");
 
-    var dataFilter = getDataFilter();
+    var dataFilter = selector.getDataFilter();
     dataFilter.limit = 1024 * 4;
 
     var download = document.querySelector('#download');
@@ -284,10 +266,10 @@ var updateDownloadURL = function () {
 };
 
 
-var updateChecklist = function () {
+var updateChecklist = function (selector) {
     var req = xhr();
     if (req !== undefined) {
-        req.open('GET', createChecklistURL(getDataFilter()), true);
+        req.open('GET', createChecklistURL(selector.getDataFilter()), true);
         req.onreadystatechange = function () {
             if (req.readyState === 4) {
                 setChecklistStatus('received response');
@@ -297,7 +279,7 @@ var updateChecklist = function () {
                         var checklist = document.querySelector('#checklist');
                         if (resp.items.length > 0) {
                             renderChecklist(checklist, resp);
-                            updateDownloadURL();
+                            updateDownloadURL(selector);
                         } else {
                             var statusMap = { requested: "working on your checklist..." };
                             var statusMsg = statusMap[resp.status] || resp.status;
@@ -311,12 +293,11 @@ var updateChecklist = function () {
                                 quickfixButton.textContent = 'removing your trait selectors';
                                 quickfixButton.title = 'remove your trait selectors';
                                 quickfixButton.addEventListener('click', function (event) {
-                                    removeChildren('#traitFilter');
-                                    updateTraitSelector();
+                                    selector.removeTraitSelectors();
                                     clearChecklist();
-                                    updateChecklist();
+                                    updateChecklist(selector);
                                 }, false);
-                                if (document.querySelector('.traitFilterElement')) {
+                                if (selector.hasTraitSelectors()) {
                                     msgElem.textContent = msg + ' by ';
                                     download.appendChild(quickfixButton);
                                     download.appendChild(document.createElement('span')).textContent = '.';
@@ -341,257 +322,11 @@ var setChecklistStatus = function (status) {
     document.querySelector('#checklistStatus').textContent = status;
 };
 
-var dataFilterId = '#checklist';
-
-var getDataFilter = function () {
-    var checklist = document.querySelector(dataFilterId);
-    var dataFilter = { limit: 20 };
-    if (checklist.hasAttribute('data-filter')) {
-        dataFilter = JSON.parse(checklist.getAttribute('data-filter'));
-    }
-    return dataFilter;
-};
-
-var setDataFilter = function (dataFilter) {
-    var dataFilterString = JSON.stringify(dataFilter);
-
-    document.querySelector(dataFilterId).setAttribute('data-filter', dataFilterString);
-    document.location.hash = util.toHash(dataFilter);
-};
-
-function collectSelectors(selector) {
-    var filterElems = Array.prototype.slice.call(document.querySelectorAll(selector));
-
-    return filterElems.reduce(function (filterAgg, filterElem) {
-        var taxonName = filterElem.textContent.trim();
-        if (taxonName.length > 0) {
-            filterAgg = filterAgg.concat(filterElem.textContent.trim());
-        }
-        return filterAgg;
-    }, []).join(',');
-}
-
-function updateTaxonSelector() {
-    var filterJoin = collectSelectors('.taxonFilterElementName');
-    var filter = getDataFilter();
-    filter.taxonSelector = filterJoin;
-    setDataFilter(filter);
-}
-
-
-function updateTraitSelector() {
-    var filter = getDataFilter();
-    filter.traitSelector = collectSelectors('.traitFilterElement');
-    setDataFilter(filter);
-}
-
-function getBoundsArea(areaSelect) {
-    var size = areaSelect.map.getSize();
-    var topRight = new L.Point();
-    var bottomLeft = new L.Point();
-    // this only holds when the size of the map lies within the container
-
-    bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
-    topRight.y = Math.round((size.y - areaSelect._height) / 2);
-    topRight.x = size.x - bottomLeft.x;
-    bottomLeft.y = size.y - topRight.y;
-    var northPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(90, 0)).y;
-    var southPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(-90, 0)).y;
-    var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
-    if (bottomLeft.y > southPoleY) {
-        sw.lat = -90;
-    }
-    if (bottomLeft.y < northPoleY) {
-        sw.lat = 90;
-    }
-    var ne = areaSelect.map.containerPointToLatLng(topRight);
-    // for some reason, latLngToContainerPoint(...) doesn't make sharp cut at poles.
-    if (topRight.y < northPoleY) {
-        ne.lat = 90;
-    }
-    if (topRight.y > southPoleY) {
-        sw.lat = -90;
-    }
-    return util.normBounds(new L.LatLngBounds(sw, ne));
-}
-
-var updateBBox = function (areaSelect) {
-    var bounds = getBoundsArea(areaSelect);
-    var dataFilter = getDataFilter();
-    dataFilter.wktString = util.wktEnvelope(bounds);
-
-    dataFilter.zoom = areaSelect.map.getZoom();
-    dataFilter.lat = areaSelect.map.getCenter().lat;
-    dataFilter.lng = areaSelect.map.getCenter().lng;
-    dataFilter.width = areaSelect._width;
-    dataFilter.height = areaSelect._height;
-
-    setDataFilter(dataFilter);
-};
-
-var createSelectors = function () {
-    var ee = new EventEmitter();
-
-    var addTaxonFilterElement = function (taxonName) {
-        var taxonDiv = document.createElement('div');
-        taxonDiv.setAttribute('class', 'taxonFilterElement');
-        var removeButton = document.createElement('button');
-
-        removeButton.addEventListener('click', function (event) {
-            taxonDiv.parentNode.removeChild(taxonDiv);
-            updateTaxonSelector();
-            ee.emit('update');
-        });
-        removeButton.textContent = 'x';
-        removeButton.title = 'remove taxon selector';
-
-        var taxonNameSpan = document.createElement('span');
-        taxonNameSpan.setAttribute('class', 'taxonFilterElementName');
-        taxonNameSpan.textContent = taxonName;
-        taxonDiv.appendChild(removeButton);
-        taxonDiv.appendChild(taxonNameSpan);
-        document.querySelector('#taxonFilter').appendChild(taxonDiv);
-        updateTaxonSelector();
-    };
-
-    var addTraitFilterElement = function (traitFilter) {
-        var traitFilterElement = document.createElement('div');
-
-        var removeTraitButton = document.createElement('button');
-        removeTraitButton.textContent = 'x';
-        removeTraitButton.title = 'remove trait selector';
-        removeTraitButton.addEventListener('click', function (event) {
-            traitFilterElement.parentNode.removeChild(traitFilterElement);
-            updateTraitSelector();
-            ee.emit('update');
-        });
-        traitFilterElement.appendChild(removeTraitButton);
-
-        var traitFilterText = document.createElement('span');
-        traitFilterText.setAttribute('class', 'traitFilterElement');
-        traitFilterText.textContent = traitFilter;
-        traitFilterElement.appendChild(traitFilterText);
-
-        document.getElementById('traitFilter').appendChild(traitFilterElement);
-        updateTraitSelector();
-    };
-
-    var filterDefaults =
-    { height: '200', lat: '42.31', limit: '20', lng: '-71.05', taxonSelector: 'Aves,Insecta', width: '200', traitSelector: '', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
-
-    var dataFilter = util.fromHash(document.location.hash, filterDefaults);
-
-    var zoom = parseInt(dataFilter.zoom);
-    var lat = parseFloat(dataFilter.lat);
-    var lng = parseFloat(dataFilter.lng);
-
-    var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
-    effechecka.map = map;
-    var tileUrlTemplate = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
-    L.tileLayer(tileUrlTemplate, {
-        maxZoom: 18,
-        attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    var width = parseInt((dataFilter.width));
-    var height = parseInt((dataFilter.height));
-    var areaSelect = L.areaSelect({width: width, height: height});
-    areaSelect.addTo(map);
-    areaSelect.on("change", function () {
-        updateBBox(this);
-        ee.emit('update');
-    });
-
-    var taxonFilterNames = dataFilter.taxonSelector.split(',').filter(function (name) {
-        return name.length > 0;
-    });
-
-    taxonFilterNames.forEach(function (taxonName) {
-        addTaxonFilterElement(taxonName);
-    });
-
-    var traitFilters = dataFilter.traitSelector.split(',').filter(function (name) {
-        return name.length > 0;
-    });
-    traitFilters.forEach(function (traitFilter) {
-        addTraitFilterElement(traitFilter);
-    });
-
-    var addTraitButton = document.getElementById('addTraitSelector');
-    if (addTraitButton) {
-        addTraitButton.addEventListener('click', function (event) {
-            var traitValueElem = document.getElementById('traitValue');
-            var traitName = document.getElementById('traitName').value;
-            var traitOperator = document.getElementById('traitOperator').value;
-            var traitValue = traitValueElem.value;
-            var traitUnit = document.getElementById('traitUnit').value;
-            var traitSelector = [traitName, traitOperator, traitValue, traitUnit].join(' ');
-            ee.emit('update');
-            addTraitFilterElement(traitSelector);
-            traitValueElem.value = '';
-        });
-
-    }
-
-    var addTaxonButton = document.getElementById('addTaxonSelector');
-
-    function addAndUpdateTaxonSelector(taxonName, taxonSelectorInput) {
-        ee.emit('update');
-        addTaxonFilterElement(util.capitalize(taxonName));
-        taxonSelectorInput.value = '';
-        removeChildren('#suggestions');
-    }
-
-    if (addTaxonButton) {
-        addTaxonButton.addEventListener('click', function (event) {
-            var taxonSelectorInput = document.getElementById('taxonSelectorInput');
-            addAndUpdateTaxonSelector(taxonSelectorInput.value, taxonSelectorInput);
-        });
-
-    }
-
-    var taxonSelectorInput = document.getElementById('taxonSelectorInput');
-
-    taxonSelectorInput.onkeyup = function (event) {
-        var suggestions = removeChildren('#suggestions');
-
-        if (taxonSelectorInput.value.length > 2) {
-            var closeMatchCallback = function (closeMatches) {
-                closeMatches.forEach(function (closeMatch) {
-                    var label = closeMatch.scientificName;
-                    if (label.split(" ").length > 1) {
-                        label = '<em>' + label + '</em>'
-                    }
-                    if (closeMatch.commonNames.en) {
-                        label = closeMatch.commonNames.en + " (" + label + ")";
-                    }
-                    var child = document.createElement('li');
-                    child.innerHTML = label;
-                    child.addEventListener('click', function (event) {
-                        addAndUpdateTaxonSelector(closeMatch.scientificName.trim(), taxonSelectorInput);
-                    });
-                    suggestions.appendChild(child);
-                });
-            };
-            globiData.findCloseTaxonMatches(taxonSelectorInput.value.trim(), closeMatchCallback);
-        }
-    };
-
-    ee.init = function () {
-        updateTaxonSelector();
-        updateTraitSelector();
-        updateBBox(areaSelect);
-        ee.emit('ready');
-    };
-
-    return ee;
-}
-
-var createChecklist = function (selector) {
+checklist.createChecklist = function (selector) {
     var addRequestHandler = function (buttonId) {
         var checklistButton = document.querySelector(buttonId);
         checklistButton.addEventListener('click', function (event) {
-            updateChecklist();
+            updateChecklist(selector);
         }, false);
     };
 
@@ -610,38 +345,38 @@ var createChecklist = function (selector) {
 
     selector.on('ready', function () {
         updateLists();
-        updateChecklist();
+        updateChecklist(selector);
     });
 };
 
-var initSelectorHtml = function () {
-    var selector = document.getElementById('effechecka-selector');
-    if (selector) {
-        selector.innerHTML = Buffer("PGRpdiBpZD0ibWFwIiBzdHlsZT0id2lkdGg6IDYwMHB4OyBoZWlnaHQ6IDQwMHB4Ij48L2Rpdj4KPGJyLz4KCjxkaXYgaWQ9InRheG9uRmlsdGVyIj48L2Rpdj4KPGRpdiBpZD0idGF4b25TZWxlY3RvciI+CiAgICA8aW5wdXQgaWQ9InRheG9uU2VsZWN0b3JJbnB1dCIgY2xhc3M9ImVkaXRhYmxlIGNlbnRlcmVkIiB0eXBlPSJ0ZXh0IiBwbGFjZWhvbGRlcj0iYWRkIHRheGEiIGF1dG9jb21wbGV0ZT0ib2ZmIj4KICAgIDxidXR0b24gaWQ9ImFkZFRheG9uU2VsZWN0b3IiIHRpdGxlPSJhZGQgdGF4b24gc2VsZWN0b3IiPis8L2J1dHRvbj4KICAgIDxhIHRhcmdldD0iX2JsYW5rIiBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I3RheG9uLXNlbGVjdG9yIiB0YXJnZXQ9Il9ibGFuayI+PzwvYT4KICAgIDx1bCBpZD0ic3VnZ2VzdGlvbnMiPjwvdWw+CjwvZGl2PgoKPGRpdiBpZD0idHJhaXRGaWx0ZXIiPjwvZGl2PgoKPGRpdiBpZD0idHJhaXRFZGl0b3IiPgogICAgPHNlbGVjdCBpZD0idHJhaXROYW1lIj48b3B0aW9uIHZhbHVlPSJib2R5TWFzcyI+Ym9keSBtYXNzPC9vcHRpb24+PC9zZWxlY3Q+PHNlbGVjdCBpZD0idHJhaXRPcGVyYXRvciI+PG9wdGlvbiB2YWx1ZT0iJmx0Ij4mbHQ8L29wdGlvbj48b3B0aW9uIHZhbHVlPSImZ3QiPiZndDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ij09Ij49PTwvb3B0aW9uPjwvc2VsZWN0PgogICAgPGlucHV0IGlkPSJ0cmFpdFZhbHVlIiB0eXBlPSJudW1lcmljIiBwbGFjZWhvbGRlcj0iZW50ZXIgdHJhaXQgdmFsdWUiIGF1dG9jb21wbGV0ZT0ib2ZmIi8+CiAgICA8c2VsZWN0IGlkPSJ0cmFpdFVuaXQiPjxvcHRpb24gdmFsdWU9ImciPmc8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJrZyI+a2c8L29wdGlvbj48b3B0aW9uIHZhbHVlPSIiPm5vIHVuaXQ8L29wdGlvbj48L3NlbGVjdD4KICAgIDxidXR0b24gaWQ9ImFkZFRyYWl0U2VsZWN0b3IiIHRpdGxlPSJhZGQgdHJhaXQgc2VsZWN0b3IiPis8L2J1dHRvbj4KICAgIDxhIHRhcmdldD0iX2JsYW5rIiBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I3RyYWl0LXNlbGVjdG9yIiB0YXJnZXQ9Il9ibGFuayI+PzwvYT4KPC9kaXY+Cg==","base64");
-    }
-};
-
-var initChecklistHtml = function () {
+checklist.initChecklistHtml = function () {
     var checklist = document.getElementById('effechecka-checklist');
     if (checklist) {
         checklist.innerHTML = Buffer("PGRpdiBpZD0iY2hlY2tsaXN0LWNvbnRyb2xzIj4KICAgIDxidXR0b24gaWQ9InJlcXVlc3RDaGVja2xpc3QiPnJlcXVlc3QgY2hlY2tsaXN0PC9idXR0b24+CiAgICBjaGVja2xpc3Qgc3RhdHVzOiBbPGI+PHNwYW4gaWQ9ImNoZWNrbGlzdFN0YXR1cyI+PC9zcGFuPjwvYj5dCiAgICA8YnV0dG9uIGlkPSJyZWZyZXNoQ2hlY2tsaXN0Ij5yZWZyZXNoPC9idXR0b24+CiAgICA8YSBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I2NoZWNrbGlzdCIgdGFyZ2V0PSJfYmxhbmsiPj88L2E+Cgo8L2Rpdj4KPGRpdiBpZD0iY2hlY2tsaXN0LXJlc3VsdHMiPgogICAgPGJyLz4KICAgIDxkaXYgaWQ9ImRvd25sb2FkIj48L2Rpdj4KICAgIDxici8+CiAgICA8dGFibGUgaWQ9ImNoZWNrbGlzdCI+PC90YWJsZT4KPC9kaXY+","base64");
     }
 };
+}).call(this,require("buffer").Buffer)
+},{"./util.js":56,"buffer":5,"taxon":45}],2:[function(require,module,exports){
+var checklist = require('./checklist.js');
+var selectors = require('./selector.js');
+
+
+var effechecka = {};
+module.exports = effechecka;
 
 window.addEventListener('load', function () {
-    initSelectorHtml();
-    initChecklistHtml();
-    var selector = createSelectors();
-    createChecklist(selector);
+    selectors.initSelectorHtml();
+    checklist.initChecklistHtml();
+    var selector = selectors.createSelectors();
+    checklist.createChecklist(selector);
     selector.init();
 });
 
-}).call(this,require("buffer").Buffer)
-},{"./util.js":54,"buffer":4,"events":8,"globi-data":39,"leaflet":41,"query-string":42,"taxon":44}],2:[function(require,module,exports){
+},{"./checklist.js":1,"./selector.js":55}],3:[function(require,module,exports){
 
-},{}],3:[function(require,module,exports){
-arguments[4][2][0].apply(exports,arguments)
-},{"dup":2}],4:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],5:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -2187,7 +1922,7 @@ function blitBuffer (src, dst, offset, length) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":5,"ieee754":6,"is-array":7}],5:[function(require,module,exports){
+},{"base64-js":6,"ieee754":7,"is-array":8}],6:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -2313,7 +2048,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -2399,7 +2134,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * isArray
@@ -2434,7 +2169,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -2737,7 +2472,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var http = module.exports;
 var EventEmitter = require('events').EventEmitter;
 var Request = require('./lib/request');
@@ -2883,7 +2618,7 @@ http.STATUS_CODES = {
     510 : 'Not Extended',               // RFC 2774
     511 : 'Network Authentication Required' // RFC 6585
 };
-},{"./lib/request":10,"events":8,"url":35}],10:[function(require,module,exports){
+},{"./lib/request":11,"events":9,"url":36}],11:[function(require,module,exports){
 var Stream = require('stream');
 var Response = require('./response');
 var Base64 = require('Base64');
@@ -3094,7 +2829,7 @@ var isXHR2Compatible = function (obj) {
     if (typeof FormData !== 'undefined' && obj instanceof FormData) return true;
 };
 
-},{"./response":11,"Base64":12,"inherits":14,"stream":33}],11:[function(require,module,exports){
+},{"./response":12,"Base64":13,"inherits":15,"stream":34}],12:[function(require,module,exports){
 var Stream = require('stream');
 var util = require('util');
 
@@ -3216,7 +2951,7 @@ var isArray = Array.isArray || function (xs) {
     return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{"stream":33,"util":37}],12:[function(require,module,exports){
+},{"stream":34,"util":38}],13:[function(require,module,exports){
 ;(function () {
 
   var object = typeof exports != 'undefined' ? exports : this; // #8: web workers
@@ -3278,7 +3013,7 @@ var isArray = Array.isArray || function (xs) {
 
 }());
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var http = require('http');
 
 var https = module.exports;
@@ -3294,7 +3029,7 @@ https.request = function (params, cb) {
     return http.request.call(this, params, cb);
 }
 
-},{"http":9}],14:[function(require,module,exports){
+},{"http":10}],15:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -3319,7 +3054,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -3338,12 +3073,12 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -3403,7 +3138,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -3914,7 +3649,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4000,7 +3735,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4087,16 +3822,16 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":19,"./encode":20}],22:[function(require,module,exports){
+},{"./decode":20,"./encode":21}],23:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":23}],23:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":24}],24:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4189,7 +3924,7 @@ function forEach (xs, f) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_readable":25,"./_stream_writable":27,"_process":17,"core-util-is":28,"inherits":14}],24:[function(require,module,exports){
+},{"./_stream_readable":26,"./_stream_writable":28,"_process":18,"core-util-is":29,"inherits":15}],25:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4237,7 +3972,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":26,"core-util-is":28,"inherits":14}],25:[function(require,module,exports){
+},{"./_stream_transform":27,"core-util-is":29,"inherits":15}],26:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5192,7 +4927,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":23,"_process":17,"buffer":4,"core-util-is":28,"events":8,"inherits":14,"isarray":16,"stream":33,"string_decoder/":34,"util":3}],26:[function(require,module,exports){
+},{"./_stream_duplex":24,"_process":18,"buffer":5,"core-util-is":29,"events":9,"inherits":15,"isarray":17,"stream":34,"string_decoder/":35,"util":4}],27:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5403,7 +5138,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":23,"core-util-is":28,"inherits":14}],27:[function(require,module,exports){
+},{"./_stream_duplex":24,"core-util-is":29,"inherits":15}],28:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5884,7 +5619,7 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":23,"_process":17,"buffer":4,"core-util-is":28,"inherits":14,"stream":33}],28:[function(require,module,exports){
+},{"./_stream_duplex":24,"_process":18,"buffer":5,"core-util-is":29,"inherits":15,"stream":34}],29:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5994,10 +5729,10 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 }).call(this,{"isBuffer":require("/srv/dev/effechecka.github.io/node_modules/browserify/node_modules/insert-module-globals/node_modules/is-buffer/index.js")})
-},{"/srv/dev/effechecka.github.io/node_modules/browserify/node_modules/insert-module-globals/node_modules/is-buffer/index.js":15}],29:[function(require,module,exports){
+},{"/srv/dev/effechecka.github.io/node_modules/browserify/node_modules/insert-module-globals/node_modules/is-buffer/index.js":16}],30:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":24}],30:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":25}],31:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = require('stream');
 exports.Readable = exports;
@@ -6006,13 +5741,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":23,"./lib/_stream_passthrough.js":24,"./lib/_stream_readable.js":25,"./lib/_stream_transform.js":26,"./lib/_stream_writable.js":27,"stream":33}],31:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":24,"./lib/_stream_passthrough.js":25,"./lib/_stream_readable.js":26,"./lib/_stream_transform.js":27,"./lib/_stream_writable.js":28,"stream":34}],32:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":26}],32:[function(require,module,exports){
+},{"./lib/_stream_transform.js":27}],33:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":27}],33:[function(require,module,exports){
+},{"./lib/_stream_writable.js":28}],34:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6141,7 +5876,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":8,"inherits":14,"readable-stream/duplex.js":22,"readable-stream/passthrough.js":29,"readable-stream/readable.js":30,"readable-stream/transform.js":31,"readable-stream/writable.js":32}],34:[function(require,module,exports){
+},{"events":9,"inherits":15,"readable-stream/duplex.js":23,"readable-stream/passthrough.js":30,"readable-stream/readable.js":31,"readable-stream/transform.js":32,"readable-stream/writable.js":33}],35:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6364,7 +6099,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":4}],35:[function(require,module,exports){
+},{"buffer":5}],36:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7073,14 +6808,14 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":18,"querystring":21}],36:[function(require,module,exports){
+},{"punycode":19,"querystring":22}],37:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -7670,7 +7405,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":36,"_process":17,"inherits":14}],38:[function(require,module,exports){
+},{"./support/isBuffer":37,"_process":18,"inherits":15}],39:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -7758,7 +7493,7 @@ module.exports = function extend() {
 };
 
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 var nodeXHR = require("xmlhttprequest");
 var globiData = {};
 
@@ -8094,7 +7829,7 @@ globiData.findThumbnailById = function (search, callback) {
 
 module.exports = globiData;
 
-},{"xmlhttprequest":40}],40:[function(require,module,exports){
+},{"xmlhttprequest":41}],41:[function(require,module,exports){
 (function (process,Buffer){
 /**
  * Wrapper for built-in http.js to emulate the browser XMLHttpRequest object.
@@ -8697,7 +8432,7 @@ exports.XMLHttpRequest = function() {
 };
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":17,"buffer":4,"child_process":2,"fs":2,"http":9,"https":13,"url":35}],41:[function(require,module,exports){
+},{"_process":18,"buffer":5,"child_process":3,"fs":3,"http":10,"https":14,"url":36}],42:[function(require,module,exports){
 /*
  Leaflet, a JavaScript library for mobile-friendly interactive maps. http://leafletjs.com
  (c) 2010-2013, Vladimir Agafonkin
@@ -17861,7 +17596,7 @@ L.Map.include({
 
 
 }(window, document));
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 var strictUriEncode = require('strict-uri-encode');
 
@@ -17919,7 +17654,7 @@ exports.stringify = function (obj) {
 	}).join('&') : '';
 };
 
-},{"strict-uri-encode":43}],43:[function(require,module,exports){
+},{"strict-uri-encode":44}],44:[function(require,module,exports){
 'use strict';
 module.exports = function (str) {
 	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
@@ -17927,7 +17662,7 @@ module.exports = function (str) {
 	});
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var xhr = require('xhr');
 var queue = require('queue');
 var taxon = {};
@@ -18050,7 +17785,7 @@ taxon.saveAsCollection = function(callback, apiToken, ids, name, description) {
 
 module.exports = taxon;
 
-},{"queue":45,"xhr":47}],45:[function(require,module,exports){
+},{"queue":46,"xhr":48}],46:[function(require,module,exports){
 var inherits = require('inherits');
 var EventEmitter = require('events').EventEmitter;
 
@@ -18189,9 +17924,9 @@ function done(err) {
   this.emit('end', err);
 }
 
-},{"events":8,"inherits":46}],46:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"dup":14}],47:[function(require,module,exports){
+},{"events":9,"inherits":47}],47:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],48:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var once = require("once")
@@ -18382,7 +18117,7 @@ function createXHR(options, callback) {
 
 function noop() {}
 
-},{"global/window":48,"once":49,"parse-headers":53}],48:[function(require,module,exports){
+},{"global/window":49,"once":50,"parse-headers":54}],49:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -18395,7 +18130,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = once
 
 once.proto = once(function () {
@@ -18416,7 +18151,7 @@ function once (fn) {
   }
 }
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -18464,7 +18199,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":51}],51:[function(require,module,exports){
+},{"is-function":52}],52:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -18481,7 +18216,7 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -18497,7 +18232,7 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -18529,13 +18264,297 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":50,"trim":52}],54:[function(require,module,exports){
+},{"for-each":51,"trim":53}],55:[function(require,module,exports){
+(function (Buffer){
+
+var util = require('./util.js');
+var EventEmitter = require('events').EventEmitter;
+var globiData = require('globi-data');
+var L = require('leaflet');
+
+
+var selectors = {};
+module.exports = selectors;
+
+
+var dataFilterId = '#checklist';
+
+var getDataFilter = function () {
+    var checklist = document.querySelector(dataFilterId);
+    var dataFilter = { limit: 20 };
+    if (checklist.hasAttribute('data-filter')) {
+        dataFilter = JSON.parse(checklist.getAttribute('data-filter'));
+    }
+    return dataFilter;
+};
+
+var setDataFilter = function (dataFilter) {
+    var dataFilterString = JSON.stringify(dataFilter);
+
+    document.querySelector(dataFilterId).setAttribute('data-filter', dataFilterString);
+    document.location.hash = util.toHash(dataFilter);
+};
+
+function collectSelectors(selector) {
+    var filterElems = Array.prototype.slice.call(document.querySelectorAll(selector));
+
+    return filterElems.reduce(function (filterAgg, filterElem) {
+        var taxonName = filterElem.textContent.trim();
+        if (taxonName.length > 0) {
+            filterAgg = filterAgg.concat(filterElem.textContent.trim());
+        }
+        return filterAgg;
+    }, []).join(',');
+}
+
+function updateTaxonSelector() {
+    var filterJoin = collectSelectors('.taxonFilterElementName');
+    var filter = getDataFilter();
+    filter.taxonSelector = filterJoin;
+    setDataFilter(filter);
+}
+
+function updateTraitSelector() {
+    var filter = getDataFilter();
+    filter.traitSelector = collectSelectors('.traitFilterElement');
+    setDataFilter(filter);
+}
+
+function getBoundsArea(areaSelect) {
+    var size = areaSelect.map.getSize();
+    var topRight = new L.Point();
+    var bottomLeft = new L.Point();
+    // this only holds when the size of the map lies within the container
+
+    bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
+    topRight.y = Math.round((size.y - areaSelect._height) / 2);
+    topRight.x = size.x - bottomLeft.x;
+    bottomLeft.y = size.y - topRight.y;
+    var northPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(90, 0)).y;
+    var southPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(-90, 0)).y;
+    var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
+    if (bottomLeft.y > southPoleY) {
+        sw.lat = -90;
+    }
+    if (bottomLeft.y < northPoleY) {
+        sw.lat = 90;
+    }
+    var ne = areaSelect.map.containerPointToLatLng(topRight);
+    // for some reason, latLngToContainerPoint(...) doesn't make sharp cut at poles.
+    if (topRight.y < northPoleY) {
+        ne.lat = 90;
+    }
+    if (topRight.y > southPoleY) {
+        sw.lat = -90;
+    }
+    return util.normBounds(new L.LatLngBounds(sw, ne));
+}
+
+var updateBBox = function (areaSelect) {
+    var bounds = getBoundsArea(areaSelect);
+    var dataFilter = getDataFilter();
+    dataFilter.wktString = util.wktEnvelope(bounds);
+
+    dataFilter.zoom = areaSelect.map.getZoom();
+    dataFilter.lat = areaSelect.map.getCenter().lat;
+    dataFilter.lng = areaSelect.map.getCenter().lng;
+    dataFilter.width = areaSelect._width;
+    dataFilter.height = areaSelect._height;
+
+    setDataFilter(dataFilter);
+};
+
+selectors.createSelectors = function () {
+    var ee = new EventEmitter();
+
+    var addTaxonFilterElement = function (taxonName) {
+        var taxonDiv = document.createElement('div');
+        taxonDiv.setAttribute('class', 'taxonFilterElement');
+        var removeButton = document.createElement('button');
+
+        removeButton.addEventListener('click', function (event) {
+            taxonDiv.parentNode.removeChild(taxonDiv);
+            updateTaxonSelector();
+            ee.emit('update');
+        });
+        removeButton.textContent = 'x';
+        removeButton.title = 'remove taxon selector';
+
+        var taxonNameSpan = document.createElement('span');
+        taxonNameSpan.setAttribute('class', 'taxonFilterElementName');
+        taxonNameSpan.textContent = taxonName;
+        taxonDiv.appendChild(removeButton);
+        taxonDiv.appendChild(taxonNameSpan);
+        document.querySelector('#taxonFilter').appendChild(taxonDiv);
+        updateTaxonSelector();
+    };
+
+    var addTraitFilterElement = function (traitFilter) {
+        var traitFilterElement = document.createElement('div');
+
+        var removeTraitButton = document.createElement('button');
+        removeTraitButton.textContent = 'x';
+        removeTraitButton.title = 'remove trait selector';
+        removeTraitButton.addEventListener('click', function (event) {
+            traitFilterElement.parentNode.removeChild(traitFilterElement);
+            updateTraitSelector();
+            ee.emit('update');
+        });
+        traitFilterElement.appendChild(removeTraitButton);
+
+        var traitFilterText = document.createElement('span');
+        traitFilterText.setAttribute('class', 'traitFilterElement');
+        traitFilterText.textContent = traitFilter;
+        traitFilterElement.appendChild(traitFilterText);
+
+        document.getElementById('traitFilter').appendChild(traitFilterElement);
+        updateTraitSelector();
+    };
+
+    var filterDefaults =
+    { height: '200', lat: '42.31', limit: '20', lng: '-71.05', taxonSelector: 'Aves,Insecta', width: '200', traitSelector: '', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
+
+    var dataFilter = util.fromHash(document.location.hash, filterDefaults);
+
+    var zoom = parseInt(dataFilter.zoom);
+    var lat = parseFloat(dataFilter.lat);
+    var lng = parseFloat(dataFilter.lng);
+
+    var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
+    selectors.map = map;
+    var tileUrlTemplate = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
+    L.tileLayer(tileUrlTemplate, {
+        maxZoom: 18,
+        attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var width = parseInt((dataFilter.width));
+    var height = parseInt((dataFilter.height));
+    var areaSelect = L.areaSelect({width: width, height: height});
+    areaSelect.addTo(map);
+    areaSelect.on("change", function () {
+        updateBBox(this);
+        ee.emit('update');
+    });
+
+    var taxonFilterNames = dataFilter.taxonSelector.split(',').filter(function (name) {
+        return name.length > 0;
+    });
+
+    taxonFilterNames.forEach(function (taxonName) {
+        addTaxonFilterElement(taxonName);
+    });
+
+    var traitFilters = dataFilter.traitSelector.split(',').filter(function (name) {
+        return name.length > 0;
+    });
+    traitFilters.forEach(function (traitFilter) {
+        addTraitFilterElement(traitFilter);
+    });
+
+    var addTraitButton = document.getElementById('addTraitSelector');
+    if (addTraitButton) {
+        addTraitButton.addEventListener('click', function (event) {
+            var traitValueElem = document.getElementById('traitValue');
+            var traitName = document.getElementById('traitName').value;
+            var traitOperator = document.getElementById('traitOperator').value;
+            var traitValue = traitValueElem.value;
+            var traitUnit = document.getElementById('traitUnit').value;
+            var traitSelector = [traitName, traitOperator, traitValue, traitUnit].join(' ');
+            ee.emit('update');
+            addTraitFilterElement(traitSelector);
+            traitValueElem.value = '';
+        });
+
+    }
+
+    var addTaxonButton = document.getElementById('addTaxonSelector');
+
+    function addAndUpdateTaxonSelector(taxonName, taxonSelectorInput) {
+        ee.emit('update');
+        addTaxonFilterElement(util.capitalize(taxonName));
+        taxonSelectorInput.value = '';
+        util.removeChildren('#suggestions');
+    }
+
+    if (addTaxonButton) {
+        addTaxonButton.addEventListener('click', function (event) {
+            var taxonSelectorInput = document.getElementById('taxonSelectorInput');
+            addAndUpdateTaxonSelector(taxonSelectorInput.value, taxonSelectorInput);
+        });
+
+    }
+
+    var taxonSelectorInput = document.getElementById('taxonSelectorInput');
+
+    taxonSelectorInput.onkeyup = function (event) {
+        var suggestions = util.removeChildren('#suggestions');
+
+        if (taxonSelectorInput.value.length > 2) {
+            var closeMatchCallback = function (closeMatches) {
+                closeMatches.forEach(function (closeMatch) {
+                    var label = closeMatch.scientificName;
+                    if (label.split(" ").length > 1) {
+                        label = '<em>' + label + '</em>'
+                    }
+                    if (closeMatch.commonNames.en) {
+                        label = closeMatch.commonNames.en + " (" + label + ")";
+                    }
+                    var child = document.createElement('li');
+                    child.innerHTML = label;
+                    child.addEventListener('click', function (event) {
+                        addAndUpdateTaxonSelector(closeMatch.scientificName.trim(), taxonSelectorInput);
+                    });
+                    suggestions.appendChild(child);
+                });
+            };
+            globiData.findCloseTaxonMatches(taxonSelectorInput.value.trim(), closeMatchCallback);
+        }
+    };
+
+    ee.init = function () {
+        updateTaxonSelector();
+        updateTraitSelector();
+        updateBBox(areaSelect);
+        ee.emit('ready');
+    };
+
+    ee.removeTraitSelectors = function () {
+        util.removeChildren('#traitFilter');
+        updateTraitSelector();
+    };
+
+    ee.hasTraitSelectors = function () {
+        document.querySelector('.traitFilterElement');
+    };
+
+    ee.getDataFilter = getDataFilter;
+
+    return ee;
+};
+
+selectors.initSelectorHtml = function () {
+    var selector = document.getElementById('effechecka-selector');
+    if (selector) {
+        selector.innerHTML = Buffer("PGRpdiBpZD0ibWFwIiBzdHlsZT0id2lkdGg6IDYwMHB4OyBoZWlnaHQ6IDQwMHB4Ij48L2Rpdj4KPGJyLz4KCjxkaXYgaWQ9InRheG9uRmlsdGVyIj48L2Rpdj4KPGRpdiBpZD0idGF4b25TZWxlY3RvciI+CiAgICA8aW5wdXQgaWQ9InRheG9uU2VsZWN0b3JJbnB1dCIgY2xhc3M9ImVkaXRhYmxlIGNlbnRlcmVkIiB0eXBlPSJ0ZXh0IiBwbGFjZWhvbGRlcj0iYWRkIHRheGEiIGF1dG9jb21wbGV0ZT0ib2ZmIj4KICAgIDxidXR0b24gaWQ9ImFkZFRheG9uU2VsZWN0b3IiIHRpdGxlPSJhZGQgdGF4b24gc2VsZWN0b3IiPis8L2J1dHRvbj4KICAgIDxhIHRhcmdldD0iX2JsYW5rIiBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I3RheG9uLXNlbGVjdG9yIiB0YXJnZXQ9Il9ibGFuayI+PzwvYT4KICAgIDx1bCBpZD0ic3VnZ2VzdGlvbnMiPjwvdWw+CjwvZGl2PgoKPGRpdiBpZD0idHJhaXRGaWx0ZXIiPjwvZGl2PgoKPGRpdiBpZD0idHJhaXRFZGl0b3IiPgogICAgPHNlbGVjdCBpZD0idHJhaXROYW1lIj48b3B0aW9uIHZhbHVlPSJib2R5TWFzcyI+Ym9keSBtYXNzPC9vcHRpb24+PC9zZWxlY3Q+PHNlbGVjdCBpZD0idHJhaXRPcGVyYXRvciI+PG9wdGlvbiB2YWx1ZT0iJmx0Ij4mbHQ8L29wdGlvbj48b3B0aW9uIHZhbHVlPSImZ3QiPiZndDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ij09Ij49PTwvb3B0aW9uPjwvc2VsZWN0PgogICAgPGlucHV0IGlkPSJ0cmFpdFZhbHVlIiB0eXBlPSJudW1lcmljIiBwbGFjZWhvbGRlcj0iZW50ZXIgdHJhaXQgdmFsdWUiIGF1dG9jb21wbGV0ZT0ib2ZmIi8+CiAgICA8c2VsZWN0IGlkPSJ0cmFpdFVuaXQiPjxvcHRpb24gdmFsdWU9ImciPmc8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJrZyI+a2c8L29wdGlvbj48b3B0aW9uIHZhbHVlPSIiPm5vIHVuaXQ8L29wdGlvbj48L3NlbGVjdD4KICAgIDxidXR0b24gaWQ9ImFkZFRyYWl0U2VsZWN0b3IiIHRpdGxlPSJhZGQgdHJhaXQgc2VsZWN0b3IiPis8L2J1dHRvbj4KICAgIDxhIHRhcmdldD0iX2JsYW5rIiBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I3RyYWl0LXNlbGVjdG9yIiB0YXJnZXQ9Il9ibGFuayI+PzwvYT4KPC9kaXY+Cg==","base64");
+    }
+};
+}).call(this,require("buffer").Buffer)
+},{"./util.js":56,"buffer":5,"events":9,"globi-data":40,"leaflet":42}],56:[function(require,module,exports){
 var queryString = require('query-string');
 var extend = require('extend');
 
 var util = {};
 
 module.exports = util;
+
+util.removeChildren = function (selector) {
+    var checklist = document.querySelector(selector);
+    while (checklist && checklist.firstChild) {
+        checklist.removeChild(checklist.firstChild);
+    }
+    return checklist;
+};
 
 util.fromHash = function(hash, defaultFilter) {
   var filter = defaultFilter || {};
@@ -18594,4 +18613,4 @@ util.capitalize = function(taxonName) {
   return capitalizedName;
 }
 
-},{"extend":38,"query-string":42}]},{},[1]);
+},{"extend":39,"query-string":43}]},{},[2]);
