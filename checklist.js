@@ -347,8 +347,7 @@ checklist.createChecklist = function (selector) {
     });
 };
 
-checklist.initChecklistHtml = function () {
-    var checklist = document.getElementById('effechecka-checklist');
+checklist.addChecklistTo = function (checklist) {
     if (checklist) {
         checklist.innerHTML = fs.readFileSync(__dirname + '/checklist.html');
     }

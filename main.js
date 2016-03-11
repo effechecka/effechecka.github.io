@@ -6,8 +6,8 @@ var effechecka = {};
 module.exports = effechecka;
 
 window.addEventListener('load', function () {
-    selectors.initSelectorHtml();
-    checklist.initChecklistHtml();
+    selectors.addSelectorTo(document.getElementById('effechecka-selector'));
+    checklist.addChecklistTo(document.getElementById('effechecka-checklist'));
     var selector = selectors.createSelectors();
     checklist.createChecklist(selector);
     selector.init();

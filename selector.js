@@ -8,11 +8,12 @@ var L = require('leaflet');
 var selectors = {};
 module.exports = selectors;
 
-
-var dataFilterId = '#checklist';
+var getDataFilterId = function() {
+    return '#selectorContainer';
+};
 
 var getDataFilter = function () {
-    var checklist = document.querySelector(dataFilterId);
+    var checklist = document.querySelector(getDataFilterId());
     var dataFilter = { limit: 20 };
     if (checklist.hasAttribute('data-filter')) {
         dataFilter = JSON.parse(checklist.getAttribute('data-filter'));
@@ -22,8 +23,7 @@ var getDataFilter = function () {
 
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
-
-    document.querySelector(dataFilterId).setAttribute('data-filter', dataFilterString);
+    document.querySelector(getDataFilterId()).setAttribute('data-filter', dataFilterString);
     document.location.hash = util.toHash(dataFilter);
 };
 
@@ -265,8 +265,7 @@ selectors.createSelectors = function () {
     return ee;
 };
 
-selectors.initSelectorHtml = function () {
-    var selector = document.getElementById('effechecka-selector');
+selectors.addSelectorTo = function (selector) {
     if (selector) {
         selector.innerHTML = fs.readFileSync(__dirname + '/selector.html');
     }
