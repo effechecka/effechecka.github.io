@@ -6,17 +6,7 @@ var checklist = {};
 module.exports = checklist;
 
 
-var classNameFor = function (someString) {
-    return someString.replace(/\W/g, '_');
-};
-
-function sepElem() {
-    var sepElem = document.createElement('span');
-    sepElem.textContent = ' | ';
-    return sepElem;
-}
-
-function renderChecklist(checklist, resp) {
+function renderChecklistItems(checklist, resp) {
     checklist.setAttribute('data-results', resp.results);
     var headerRow = document.createElement('tr');
     var header = document.createElement('th');
@@ -32,12 +22,12 @@ function renderChecklist(checklist, resp) {
         var path = document.createElement('td');
         var pathElems = item.taxon.split('|').reduce(function (pathFull, pathPartValue) {
             if (pathPartValue.length == 0) {
-                return pathFull.concat([sepElem()]);
+                return pathFull.concat([util.sepElem()]);
             } else {
                 var pathPartElem = document.createElement('span');
-                pathPartElem.setAttribute('class', classNameFor(pathPartValue));
+                pathPartElem.setAttribute('class', util.classNameFor(pathPartValue));
                 pathPartElem.textContent = pathPartValue;
-                return pathFull.concat([pathPartElem, sepElem()])
+                return pathFull.concat([pathPartElem, util.sepElem()])
             }
         }, []);
         pathElems.forEach(function (elem) {
@@ -52,20 +42,7 @@ function renderChecklist(checklist, resp) {
 }
 
 function xhr() {
-    var req = null;
-    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
-        req = new XMLHttpRequest();
-    } else if ((typeof window !== 'undefined') && window.ActiveXObject) { //     IE
-        try {
-            req = new ActiveXObject('Msxml2.XMLHTTP');
-        } catch (e) {
-            try {
-                req = new ActiveXObject('Microsoft.XMLHTTP');
-            } catch (e) {
-            }
-        }
-    }
-    return req;
+    return util.xhr();
 }
 
 function clearChecklist() {
@@ -75,15 +52,7 @@ function clearChecklist() {
 }
 
 var createChecklistURL = function (dataFilter) {
-    return 'http://apihack-c18.idigbio.org/checklist' + Object.keys(dataFilter).filter(function (key) {
-        return ['taxonSelector', 'wktString', 'traitSelector', 'limit'].indexOf(key) != -1;
-    }).reduce(function (accum, key) {
-        if (dataFilter[key] !== null) {
-            return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
-        } else {
-            return accum;
-        }
-    }, '?');
+    return util.createRequestURL(dataFilter, 'checklist');
 };
 
 var addCSVDownloadLink = function (filename, label, csvString) {
@@ -96,7 +65,7 @@ var addCSVDownloadLink = function (filename, label, csvString) {
 }
 
 var quoteString = function (str) {
-    return ['"', str, '"'].join('');
+    return util.quoteString(str);
 }
 
 var addChecklistDownloadLink = function (items) {
@@ -111,34 +80,15 @@ var addChecklistDownloadLink = function (items) {
 }
 
 var onNameAndPageIds = function (nameAndPageIds) {
+    setChecklistStatus('ready');
     addDownloadAsEOLIdsLink(nameAndPageIds);
-    addHyperlinksForNames(nameAndPageIds);
-}
-
-var addHyperlinksForNames = function (nameAndPageIds) {
-    nameAndPageIds.forEach(function (nameAndPageId) {
-        var elemId = classNameFor(nameAndPageId.name);
-        var selector = '.' + elemId;
-        var elems = document.querySelectorAll(selector);
-        for (index = 0; index < elems.length; index++) {
-            var elem = elems[index];
-            var linkElem = document.createElement('a');
-            linkElem.setAttribute('class', elemId);
-            linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
-            linkElem.textContent = nameAndPageId.name;
-            linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
-            var elemParent = elem.parentNode;
-            elemParent.insertBefore(linkElem, elem);
-            elemParent.removeChild(elem);
-        }
-    });
-}
+    util.addHyperlinksForNames(nameAndPageIds);
+};
 
 var addDownloadAsEOLIdsLink = function (nameAndPageIds) {
     var pageIds = nameAndPageIds.map(function (nameAndPageId) {
         return nameAndPageId.id
     });
-    setChecklistStatus('ready');
     var maxCollectionItems = 10;
     addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
     var download = document.querySelector('#download');
@@ -264,57 +214,45 @@ var updateDownloadURL = function (selector) {
 };
 
 
-var updateChecklist = function (selector) {
-    var req = xhr();
-    if (req !== undefined) {
-        req.open('GET', createChecklistURL(selector.getDataFilter()), true);
-        req.onreadystatechange = function () {
-            if (req.readyState === 4) {
-                setChecklistStatus('received response');
-                if (req.status === 200) {
-                    var resp = JSON.parse(req.responseText);
-                    if (resp.items) {
-                        var checklist = document.querySelector('#checklist');
-                        if (resp.items.length > 0) {
-                            renderChecklist(checklist, resp);
-                            updateDownloadURL(selector);
-                        } else {
-                            var statusMap = { requested: "working on your checklist..." };
-                            var statusMsg = statusMap[resp.status] || resp.status;
-                            setChecklistStatus(statusMsg);
-                            if (resp.status === 'ready') {
-                                var download = document.querySelector('#download');
-                                var msgElem = download.appendChild(document.createElement('span'));
-                                var msg = 'The checklist you\'ve requested contains no items. Bummer! You might want to try changing your search parameters';
+var renderChecklist = function(resp, selector) {
+    if (resp.items) {
+        var checklist = document.querySelector('#checklist');
+        if (resp.items.length > 0) {
+            renderChecklistItems(checklist, resp);
+            updateDownloadURL(selector);
+        } else {
+            var statusMap = { requested: "working on your checklist..." };
+            var statusMsg = statusMap[resp.status] || resp.status;
+            setChecklistStatus(statusMsg);
+            if (resp.status === 'ready') {
+                var download = document.querySelector('#download');
+                var msgElem = download.appendChild(document.createElement('span'));
+                var msg = 'The checklist you\'ve requested contains no items. Bummer! You might want to try changing your search parameters';
 
-                                var quickfixButton = document.createElement('button');
-                                quickfixButton.textContent = 'removing your trait selectors';
-                                quickfixButton.title = 'remove your trait selectors';
-                                quickfixButton.addEventListener('click', function (event) {
-                                    selector.removeTraitSelectors();
-                                    clearChecklist();
-                                    updateChecklist(selector);
-                                }, false);
-                                if (selector.hasTraitSelectors()) {
-                                    msgElem.textContent = msg + ' by ';
-                                    download.appendChild(quickfixButton);
-                                    download.appendChild(document.createElement('span')).textContent = '.';
-                                } else {
-                                    msgElem.textContent = msg + '.';
-                                }
-                            }
-                        }
-                    }
+                var quickfixButton = document.createElement('button');
+                quickfixButton.textContent = 'removing your trait selectors';
+                quickfixButton.title = 'remove your trait selectors';
+                quickfixButton.addEventListener('click', function (event) {
+                    selector.removeTraitSelectors();
+                    clearChecklist();
+                    requestSelectedChecklist(selector);
+                }, false);
+                if (selector.hasTraitSelectors()) {
+                    msgElem.textContent = msg + ' by ';
+                    download.appendChild(quickfixButton);
+                    download.appendChild(document.createElement('span')).textContent = '.';
                 } else {
-                    setChecklistStatus('not ok. Received a [' + req.status + '] status with text [' + req.statusText + '] in response to [' + createChecklistURL(getDataFilter()) + ']');
+                    msgElem.textContent = msg + '.';
                 }
             }
-        };
-        clearChecklist();
-        setChecklistStatus('requesting checklist...');
-        req.send(null);
+        }
     }
 };
+
+var requestSelectedChecklist = function(selector) {
+    util.requestSelected(createChecklistURL(selector.getDataFilter()), selector, renderChecklist, setChecklistStatus);
+};
+
 
 var setChecklistStatus = function (status) {
     document.querySelector('#checklistStatus').textContent = status;
@@ -324,7 +262,9 @@ checklist.createChecklist = function (selector) {
     var addRequestHandler = function (buttonId) {
         var checklistButton = document.querySelector(buttonId);
         checklistButton.addEventListener('click', function (event) {
-            updateChecklist(selector);
+            clearChecklist();
+            requestSelectedChecklist(selector);
+
         }, false);
     };
 
@@ -343,7 +283,7 @@ checklist.createChecklist = function (selector) {
 
     selector.on('ready', function () {
         updateLists();
-        updateChecklist(selector);
+        requestSelectedChecklist(selector);
     });
 };
 

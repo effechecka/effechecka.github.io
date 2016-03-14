@@ -19,7 +19,7 @@
   },
   "scripts": {
     "test": "tape test/*.js",
-    "watch": "watchify main.js -o static/bundle.js -dv",
+    "watch": "watchify -t brfs main.js -o static/bundle.js -dv",
     "build": "browserify -t brfs main.js > static/bundle.js",
     "publish": "npm run build && html-inline index.html | htmlbin"
   },

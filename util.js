@@ -68,4 +68,89 @@ util.capitalize = function(taxonName) {
     capitalizedName = parts.join(' ');
   }
   return capitalizedName;
-}
+};
+
+util.createRequestURL = function(dataFilter, endpoint) {
+    return 'http://apihack-c18.idigbio.org/' + endpoint + Object.keys(dataFilter).filter(function (key) {
+        return ['taxonSelector', 'wktString', 'traitSelector', 'limit'].indexOf(key) != -1;
+    }).reduce(function (accum, key) {
+        if (dataFilter[key] !== null) {
+            return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
+        } else {
+            return accum;
+        }
+    }, '?');
+};
+
+util.quoteString = function(str) {
+    return ['"', str, '"'].join('');
+};
+
+
+util.xhr = function() {
+    var req = null;
+    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+        req = new XMLHttpRequest();
+    } else if ((typeof window !== 'undefined') && window.ActiveXObject) { //     IE
+        try {
+            req = new ActiveXObject('Msxml2.XMLHTTP');
+        } catch (e) {
+            try {
+                req = new ActiveXObject('Microsoft.XMLHTTP');
+            } catch (e) {
+            }
+        }
+    }
+    return req;
+};
+
+util.classNameFor = function(str) {
+    return str.replace(/\W/g, '_');
+};
+
+util.sepElem = function() {
+    var sepElem = document.createElement('span');
+    sepElem.textContent = ' | ';
+    return sepElem;
+};
+
+util.addHyperlinksForNames = function (nameAndPageIds) {
+    nameAndPageIds.forEach(function (nameAndPageId) {
+        var elemId = util.classNameFor(nameAndPageId.name);
+        var selector = '.' + elemId;
+        var elems = document.querySelectorAll(selector);
+        for (var index = 0; index < elems.length; index++) {
+            var elem = elems[index];
+            var linkElem = document.createElement('a');
+            linkElem.setAttribute('class', elemId);
+            linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
+            linkElem.textContent = nameAndPageId.name;
+            linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
+            var elemParent = elem.parentNode;
+            elemParent.insertBefore(linkElem, elem);
+            elemParent.removeChild(elem);
+        }
+    });
+};
+
+
+
+util.requestSelected = function (url, selector, render, updateStatus) {
+    var req = util.xhr();
+    if (req !== undefined) {
+        req.open('GET', url, true);
+        req.onreadystatechange = function () {
+            if (req.readyState === 4) {
+                updateStatus('received response');
+                if (req.status === 200) {
+                    var resp = JSON.parse(req.responseText);
+                    render(resp, selector);
+                } else {
+                    updateStatus('not ok. Received a [' + req.status + '] status with text [' + req.statusText + '] in response to [' + url + ']');
+                }
+            }
+        };
+        updateStatus('requesting checklist...');
+        req.send(null);
+    }
+};
