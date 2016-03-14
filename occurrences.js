@@ -20,7 +20,7 @@ function renderOccurrenceItems(occurrences, resp) {
     header.textContent = 'lng';
     headerRow.appendChild(header);
     header = document.createElement('th');
-    header.textContent = 'eventDate';
+    header.textContent = 'eventStartDate';
     headerRow.appendChild(header);
     header = document.createElement('th');
     header.textContent = 'occurrence id';
@@ -53,13 +53,13 @@ function renderOccurrenceItems(occurrences, resp) {
         recordCount.textContent = item.lng;
         row.appendChild(recordCount);
         recordCount = document.createElement('td');
-        recordCount.textContent = new Date(item.eventDate).toISOString();
+        recordCount.textContent = new Date(item.start).toISOString();
         row.appendChild(recordCount);
         recordCount = document.createElement('td');
-        recordCount.textContent = item.recordUrl;
+        recordCount.textContent = item.id;
         row.appendChild(recordCount);
         recordCount = document.createElement('td');
-        recordCount.textContent = new Date(item.firstAddedDate).toISOString();
+        recordCount.textContent = new Date(item.added).toISOString();
         row.appendChild(recordCount);
         occurrences.appendChild(row);
     });
