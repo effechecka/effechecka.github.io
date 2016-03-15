@@ -18312,12 +18312,12 @@ var quoteString = function (str) {
 
 var addOccurrencesDownloadLink = function (items) {
     var csvString = items.reduce(function (agg, item) {
-        if (item.taxon && item.eventDate) {
+        if (item.taxon && item.start) {
             var taxonName = quoteString(util.lastNameFromPath(item.taxon));
             agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id)].join(','));
         }
         return agg;
-    }, ['taxon name,taxon path,lat,lng,eventDate,occurrenceId']).join('\n');
+    }, ['taxon name,taxon path,lat,lng,eventStartDate,occurrenceId']).join('\n');
     addCSVDownloadLink('occurrences.csv', 'csv', csvString);
 }
 
