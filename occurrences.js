@@ -26,7 +26,7 @@ function renderOccurrenceItems(occurrences, resp) {
     header.textContent = 'occurrence id';
     headerRow.appendChild(header);
     header = document.createElement('th');
-    header.textContent = 'firstAddedDate';
+    header.textContent = 'firstFoundDate';
     headerRow.appendChild(header);
     occurrences.appendChild(headerRow);
     resp.items.forEach(function (item) {
@@ -97,7 +97,7 @@ var addOccurrencesDownloadLink = function (items) {
     var csvString = items.reduce(function (agg, item) {
         if (item.taxon && item.eventDate) {
             var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.eventDate).toISOString(), quoteString(item.recordUrl)].join(','));
+            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id)].join(','));
         }
         return agg;
     }, ['taxon name,taxon path,lat,lng,eventDate,occurrenceId']).join('\n');

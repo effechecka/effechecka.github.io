@@ -18243,7 +18243,7 @@ function renderOccurrenceItems(occurrences, resp) {
     header.textContent = 'occurrence id';
     headerRow.appendChild(header);
     header = document.createElement('th');
-    header.textContent = 'firstAddedDate';
+    header.textContent = 'firstFoundDate';
     headerRow.appendChild(header);
     occurrences.appendChild(headerRow);
     resp.items.forEach(function (item) {
@@ -18314,7 +18314,7 @@ var addOccurrencesDownloadLink = function (items) {
     var csvString = items.reduce(function (agg, item) {
         if (item.taxon && item.eventDate) {
             var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.eventDate).toISOString(), quoteString(item.recordUrl)].join(','));
+            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id)].join(','));
         }
         return agg;
     }, ['taxon name,taxon path,lat,lng,eventDate,occurrenceId']).join('\n');
@@ -18452,7 +18452,7 @@ occurrences.createOccurrences = function (selector) {
 
 occurrences.addOccurrencesTo = function (occurrences) {
     if (occurrences) {
-        occurrences.innerHTML = Buffer("PGRpdiBpZD0ib2NjdXJyZW5jZXMtY29udHJvbHMiPgogICAgPGJ1dHRvbiBpZD0icmVxdWVzdE9jY3VycmVuY2VzIj5yZXF1ZXN0IG9jY3VycmVuY2VzPC9idXR0b24+CiAgICBvY2N1cnJlbmNlcyBzdGF0dXM6IFs8Yj48c3BhbiBpZD0ib2NjdXJyZW5jZXNTdGF0dXMiPjwvc3Bhbj48L2I+XQogICAgPGJ1dHRvbiBpZD0icmVmcmVzaE9jY3VycmVuY2VzIj5yZWZyZXNoPC9idXR0b24+CiAgICA8YSBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I2NoZWNrbGlzdCIgdGFyZ2V0PSJfYmxhbmsiPj88L2E+Cgo8L2Rpdj4KPGRpdiBpZD0ib2NjdXJyZW5jZXMtcmVzdWx0cyI+CiAgICA8YnIvPgogICAgPGRpdiBpZD0iZG93bmxvYWQiPjwvZGl2PgogICAgPGJyLz4KICAgIDx0YWJsZSBpZD0ib2NjdXJyZW5jZXMiPjwvdGFibGU+CjwvZGl2Pg==","base64");
+        occurrences.innerHTML = Buffer("PGRpdiBpZD0ib2NjdXJyZW5jZXMtY29udHJvbHMiPgogICAgPGJ1dHRvbiBpZD0icmVxdWVzdE9jY3VycmVuY2VzIj5yZXF1ZXN0IG9jY3VycmVuY2VzPC9idXR0b24+CiAgICBvY2N1cnJlbmNlcyBzdGF0dXM6IFs8Yj48c3BhbiBpZD0ib2NjdXJyZW5jZXNTdGF0dXMiPjwvc3Bhbj48L2I+XQogICAgPGJ1dHRvbiBpZD0icmVmcmVzaE9jY3VycmVuY2VzIj5yZWZyZXNoPC9idXR0b24+CiAgICA8YSBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vamhwb2VsZW4vZWZmZWNoZWNrYS93aWtpL0Fib3V0I2NoZWNrbGlzdCIgdGFyZ2V0PSJfYmxhbmsiPj88L2E+Cgo8L2Rpdj4KPGRpdiBpZD0ib2NjdXJyZW5jZXMtcmVzdWx0cyI+CiAgICA8YnIvPgogICAgPGRpdiBpZD0iZG93bmxvYWQiPjwvZGl2PgogICAgPGJyLz4KICAgIDx0YWJsZSBpZD0ib2NjdXJyZW5jZXMiPjwvdGFibGU+CjwvZGl2Pgo=","base64");
     }
 };
 
