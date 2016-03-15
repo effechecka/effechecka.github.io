@@ -18243,7 +18243,7 @@ function renderOccurrenceItems(occurrences, resp) {
     header.textContent = 'occurrence id';
     headerRow.appendChild(header);
     header = document.createElement('th');
-    header.textContent = 'firstFoundDate';
+    header.textContent = 'firstAddedDate';
     headerRow.appendChild(header);
     occurrences.appendChild(headerRow);
     resp.items.forEach(function (item) {
