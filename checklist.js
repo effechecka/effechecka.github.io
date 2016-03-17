@@ -258,7 +258,7 @@ var setChecklistStatus = function (status) {
     document.querySelector('#checklistStatus').textContent = status;
 };
 
-checklist.createChecklist = function (selector) {
+checklist.select = function (selector) {
     var addRequestHandler = function (buttonId) {
         var checklistButton = document.querySelector(buttonId);
         checklistButton.addEventListener('click', function (event) {
@@ -287,7 +287,7 @@ checklist.createChecklist = function (selector) {
     });
 };
 
-checklist.addChecklistTo = function (checklist) {
+checklist.addTo = function (checklist) {
     if (checklist) {
         checklist.innerHTML = fs.readFileSync(__dirname + '/checklist.html');
     }

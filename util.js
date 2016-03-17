@@ -13,25 +13,29 @@ util.removeChildren = function (selector) {
     return checklist;
 };
 
-util.fromHash = function(hash, defaultFilter) {
-  var filter = defaultFilter || {};
-  return extend(defaultFilter, queryString.parse(hash));
+util.fromHash = function (hash, defaultFilter) {
+    var filter = defaultFilter || {};
+    return extend(defaultFilter, queryString.parse(hash));
 };
 
-util.toHash = function(filter) {
-  return queryString.stringify(filter);
+util.toHash = function (filter) {
+    return queryString.stringify(filter);
 };
 
-util.lastNameFromPath = function(path) {
-  return path.split('|')
-    .map(function(elem) { return elem.trim(); })
-    .filter(function(elem) { return elem.length > 0; })
-    .reverse()[0];
+util.lastNameFromPath = function (path) {
+    return path.split('|')
+        .map(function (elem) {
+            return elem.trim();
+        })
+        .filter(function (elem) {
+            return elem.length > 0;
+        })
+        .reverse()[0];
 };
 
 
 // from leaflet Util.wrapNum 
-util.wrapNum = function(x, range, includeMax) {
+util.wrapNum = function (x, range, includeMax) {
     var max = range[1],
         min = range[0],
         d = max - min;
@@ -39,38 +43,38 @@ util.wrapNum = function(x, range, includeMax) {
 };
 
 // clip lng between [-180,180]
-util.normLng = function(lng) {
-  return util.wrapNum(lng, [-180, 180], true);
+util.normLng = function (lng) {
+    return util.wrapNum(lng, [-180, 180], true);
 };
 
-util.normBounds = function(bounds) {
-  var ne = bounds._northEast;
-  var sw = bounds._southWest;
-  return { _northEast: { lat: ne.lat, lng: util.normLng(ne.lng) }, 
-    _southWest: { lat: sw.lat, lng: util.normLng(sw.lng) } };
+util.normBounds = function (bounds) {
+    var ne = bounds._northEast;
+    var sw = bounds._southWest;
+    return { _northEast: { lat: ne.lat, lng: util.normLng(ne.lng) },
+        _southWest: { lat: sw.lat, lng: util.normLng(sw.lng) } };
 }
 
-util.wktEnvelope = function(bounds) {
-  return 'ENVELOPE(' + [bounds._southWest.lng, 
-    bounds._northEast.lng,
-    bounds._northEast.lat, 
-    bounds._southWest.lat].join(',') + ')';
+util.wktEnvelope = function (bounds) {
+    return 'ENVELOPE(' + [bounds._southWest.lng,
+        bounds._northEast.lng,
+        bounds._northEast.lat,
+        bounds._southWest.lat].join(',') + ')';
 }
 
-util.capitalize = function(taxonName) {
-  var capitalizedName = taxonName;
-  if (taxonName) {
-    var parts = taxonName.split(' ');
-    var firstName = parts[0];
-    if (firstName.length > 0) {
-      parts[0] = firstName[0].toUpperCase().concat(firstName.slice(1));
+util.capitalize = function (taxonName) {
+    var capitalizedName = taxonName;
+    if (taxonName) {
+        var parts = taxonName.split(' ');
+        var firstName = parts[0];
+        if (firstName.length > 0) {
+            parts[0] = firstName[0].toUpperCase().concat(firstName.slice(1));
+        }
+        capitalizedName = parts.join(' ');
     }
-    capitalizedName = parts.join(' ');
-  }
-  return capitalizedName;
+    return capitalizedName;
 };
 
-util.createRequestURL = function(dataFilter, endpoint) {
+util.createRequestURL = function (dataFilter, endpoint) {
     return 'http://apihack-c18.idigbio.org/' + endpoint + Object.keys(dataFilter).filter(function (key) {
         return ['taxonSelector', 'wktString', 'traitSelector', 'limit'].indexOf(key) != -1;
     }).reduce(function (accum, key) {
@@ -82,12 +86,12 @@ util.createRequestURL = function(dataFilter, endpoint) {
     }, '?');
 };
 
-util.quoteString = function(str) {
+util.quoteString = function (str) {
     return ['"', str, '"'].join('');
 };
 
 
-util.xhr = function() {
+util.xhr = function () {
     var req = null;
     if (window.XMLHttpRequest) { // Mozilla, Safari, ...
         req = new XMLHttpRequest();
@@ -104,11 +108,11 @@ util.xhr = function() {
     return req;
 };
 
-util.classNameFor = function(str) {
+util.classNameFor = function (str) {
     return str.replace(/\W/g, '_');
 };
 
-util.sepElem = function() {
+util.sepElem = function () {
     var sepElem = document.createElement('span');
     sepElem.textContent = ' | ';
     return sepElem;
@@ -134,7 +138,6 @@ util.addHyperlinksForNames = function (nameAndPageIds) {
 };
 
 
-
 util.requestSelected = function (url, selector, render, updateStatus) {
     var req = util.xhr();
     if (req !== undefined) {
@@ -154,3 +157,56 @@ util.requestSelected = function (url, selector, render, updateStatus) {
         req.send(null);
     }
 };
+
+util.wktStringsToGeometryCollection = function (wktStrings) {
+    var wktString = "";
+    if (wktStrings.length == 1) {
+        wktString = wktStrings[0];
+    } else if (wktStrings.length > 1) {
+        wktString = "GEOMETRYCOLLECTION(" + wktStrings.join(",") + ")";
+    }
+    return wktString;
+}
+
+util.geometryCollectionToWktStrings = function (collectionWkt) {
+    var wktStrings = [collectionWkt];
+    if (collectionWkt.indexOf("GEOMETRYCOLLECTION") > -1) {
+        var collStart = collectionWkt.indexOf("(");
+        var collEnd = collectionWkt.lastIndexOf(")");
+        var subWkts = collectionWkt.substring(collStart + 1, collEnd);
+        var parts = subWkts.split(/([a-zA-Z]+)/);
+        wktStrings = parts.reduce(function (agg, part) {
+            if (part.match(/[a-zA-Z]+/)) {
+                agg.push(part);
+            } else {
+                var name = agg.pop();
+                if (name) {
+                    var noTrailingCommaPart = part.split(/,\s*$/);
+                    agg.push(name + noTrailingCommaPart[0]);
+                }
+            }
+            return agg;
+        }, []);
+    }
+
+    return wktStrings.map(function(str) { return util.wktEnvelopeToPolygon(str); });
+};
+
+util.wktEnvelopeToPolygon = function(wktString) {
+    var envPrefix = "ENVELOPE(";
+    var opening = wktString.indexOf(envPrefix);
+    var result = wktString;
+    if (opening > -1) {
+        var closing = wktString.lastIndexOf(")");
+        var latLngs = wktString.substring(opening+envPrefix.length, closing).split(",");
+        if (latLngs.length === 4) {
+            var lngMin = latLngs[0];
+            var lngMax = latLngs[1];
+            var latMax = latLngs[2];
+            var latMin = latLngs[3];
+            result = "POLYGON ((" + lngMin + " " + latMin + ", " + lngMin + " " + latMax + ", " + lngMax + " " + latMax + ", " + lngMax + " " + latMin + ", " + lngMin + " " + latMin + "))";
+        }
+    }
+    return result;
+};
+

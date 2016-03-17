@@ -3,12 +3,13 @@ var util = require('./util.js');
 var EventEmitter = require('events').EventEmitter;
 var globiData = require('globi-data');
 var L = require('leaflet');
-
+var draw = require('leaflet-draw');
+var wkt = require('terraformer-wkt-parser');
 
 var selectors = {};
 module.exports = selectors;
 
-var getDataFilterId = function() {
+var getDataFilterId = function () {
     return '#selectorContainer';
 };
 
@@ -24,7 +25,7 @@ var getDataFilter = function () {
 var setDataFilter = function (dataFilter) {
     var dataFilterString = JSON.stringify(dataFilter);
     document.querySelector(getDataFilterId()).setAttribute('data-filter', dataFilterString);
-    document.location.hash = util.toHash(dataFilter);
+    window.history.pushState({}, "", "?" + util.toHash(dataFilter));
 };
 
 function collectSelectors(selector) {
@@ -52,48 +53,24 @@ function updateTraitSelector() {
     setDataFilter(filter);
 }
 
-function getBoundsArea(areaSelect) {
-    var size = areaSelect.map.getSize();
-    var topRight = new L.Point();
-    var bottomLeft = new L.Point();
-    // this only holds when the size of the map lies within the container
+var updateGeospatialSelector = function (selectedAreas) {
+    var toSelectorWktString = function (selectedAreas) {
+        var wktStrings = [];
+        selectedAreas.eachLayer(function (layer) {
+            wktStrings.push(wkt.convert(layer.toGeoJSON().geometry));
+        });
+        return util.wktStringsToGeometryCollection(wktStrings);
+    };
 
-    bottomLeft.x = Math.round((size.x - areaSelect._width) / 2);
-    topRight.y = Math.round((size.y - areaSelect._height) / 2);
-    topRight.x = size.x - bottomLeft.x;
-    bottomLeft.y = size.y - topRight.y;
-    var northPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(90, 0)).y;
-    var southPoleY = areaSelect.map.latLngToContainerPoint(L.latLng(-90, 0)).y;
-    var sw = areaSelect.map.containerPointToLatLng(bottomLeft);
-    if (bottomLeft.y > southPoleY) {
-        sw.lat = -90;
-    }
-    if (bottomLeft.y < northPoleY) {
-        sw.lat = 90;
-    }
-    var ne = areaSelect.map.containerPointToLatLng(topRight);
-    // for some reason, latLngToContainerPoint(...) doesn't make sharp cut at poles.
-    if (topRight.y < northPoleY) {
-        ne.lat = 90;
-    }
-    if (topRight.y > southPoleY) {
-        sw.lat = -90;
-    }
-    return util.normBounds(new L.LatLngBounds(sw, ne));
-}
-
-var updateBBox = function (areaSelect) {
-    var bounds = getBoundsArea(areaSelect);
+    var newWktString = toSelectorWktString(selectedAreas);
     var dataFilter = getDataFilter();
-    dataFilter.wktString = util.wktEnvelope(bounds);
-
-    dataFilter.zoom = areaSelect.map.getZoom();
-    dataFilter.lat = areaSelect.map.getCenter().lat;
-    dataFilter.lng = areaSelect.map.getCenter().lng;
-    dataFilter.width = areaSelect._width;
-    dataFilter.height = areaSelect._height;
-
-    setDataFilter(dataFilter);
+    var needsUpdate = false;
+    if (newWktString !== dataFilter.wktString) {
+        dataFilter.wktString = newWktString;
+        setDataFilter(dataFilter);
+        needsUpdate = true;
+    }
+    return needsUpdate;
 };
 
 selectors.createSelectors = function () {
@@ -143,10 +120,14 @@ selectors.createSelectors = function () {
         updateTraitSelector();
     };
 
-    var filterDefaults =
-    { height: '200', lat: '42.31', limit: '20', lng: '-71.05', taxonSelector: 'Aves,Insecta', width: '200', traitSelector: '', wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)', zoom: '7' };
+    var filterDefaults = { lat: '42.31', lng: '-71.05', zoom: '7',
+        limit: 20,
+        taxonSelector: 'Aves,Insecta',
+        traitSelector: '',
+        wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)'
+    };
 
-    var dataFilter = util.fromHash(document.location.hash, filterDefaults);
+    var dataFilter = util.fromHash(document.location.search || document.location.hash, filterDefaults);
 
     var zoom = parseInt(dataFilter.zoom);
     var lat = parseFloat(dataFilter.lat);
@@ -160,12 +141,47 @@ selectors.createSelectors = function () {
         attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    var width = parseInt((dataFilter.width));
-    var height = parseInt((dataFilter.height));
-    var areaSelect = L.areaSelect({width: width, height: height});
-    areaSelect.addTo(map);
-    areaSelect.on("change", function () {
-        updateBBox(this);
+
+    var selectedAreaWktStrings = util.geometryCollectionToWktStrings(dataFilter.wktString);
+    var selectedGeoJsonList = selectedAreaWktStrings.map(function (wktString) {
+        return wkt.parse(wktString);
+    });
+    var selectedAreas = L.geoJson(selectedGeoJsonList).addTo(map);
+
+    var drawControl = new L.Control.Draw({
+                draw: {
+                    marker: false,
+                    polyline: false,
+                    circle: false
+                },
+                edit: {
+                    featureGroup: selectedAreas
+                }
+            }
+        )
+        ;
+    map.addControl(drawControl);
+
+    map.on('draw:created', function (e) {
+        selectedAreas.addLayer(e.layer);
+        if (updateGeospatialSelector(selectedAreas)) {
+            ee.emit('update');
+        }
+    });
+
+    map.on('draw:edited draw:deleted', function (e) {
+        console.log('hello');
+        if (updateGeospatialSelector(selectedAreas)) {
+            ee.emit('update');
+        }
+    });
+
+    map.on('moveend dragend zoomend', function (e) {
+        var dataFilter = getDataFilter();
+        dataFilter.zoom = map.getZoom();
+        dataFilter.lat = map.getCenter().lat;
+        dataFilter.lng = map.getCenter().lng;
+        setDataFilter(dataFilter);
         ee.emit('update');
     });
 
@@ -244,10 +260,14 @@ selectors.createSelectors = function () {
         }
     };
 
-    ee.init = function () {
+    var updateSelectors = function () {
         updateTaxonSelector();
         updateTraitSelector();
-        updateBBox(areaSelect);
+        updateGeospatialSelector(selectedAreas);
+    };
+
+    ee.init = function () {
+        updateSelectors();
         ee.emit('ready');
     };
 
@@ -261,11 +281,10 @@ selectors.createSelectors = function () {
     };
 
     ee.getDataFilter = getDataFilter;
-
     return ee;
 };
 
-selectors.addSelectorTo = function (selector) {
+selectors.addTo = function (selector) {
     if (selector) {
         selector.innerHTML = fs.readFileSync(__dirname + '/selector.html');
     }

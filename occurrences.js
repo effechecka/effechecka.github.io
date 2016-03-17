@@ -207,7 +207,7 @@ var setOccurrencesStatus = function (status) {
     document.querySelector('#occurrencesStatus').textContent = status;
 };
 
-occurrences.createOccurrences = function (selector) {
+occurrences.select = function (selector) {
     var addRequestHandler = function (buttonId) {
         var occurrencesButton = document.querySelector(buttonId);
         occurrencesButton.addEventListener('click', function (event) {
@@ -233,7 +233,7 @@ occurrences.createOccurrences = function (selector) {
     });
 };
 
-occurrences.addOccurrencesTo = function (occurrences) {
+occurrences.addTo = function (occurrences) {
     if (occurrences) {
         occurrences.innerHTML = fs.readFileSync(__dirname + '/occurrences.html');
     }

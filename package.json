@@ -4,12 +4,13 @@
   "description": "taxonomic checklist generator",
   "main": "main.js",
   "dependencies": {
-    "autocomplete-element": "^1.0.0",
     "extend": "^3.0.0",
     "globi-data": "^0.0.43",
-    "leaflet": "^0.7.3",
+    "leaflet": "^0.7.7",
+    "leaflet.draw": "^0.3.0",
     "query-string": "^2.3.0",
     "taxon": "0.0.9",
+    "terraformer-wkt-parser": "^1.1.0",
     "xhr": "^2.1.0"
   },
   "devDependencies": {
