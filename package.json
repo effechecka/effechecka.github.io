@@ -9,7 +9,7 @@
     "leaflet": "^0.7.7",
     "leaflet.draw": "^0.3.0",
     "query-string": "^2.3.0",
-    "taxon": "0.0.9",
+    "taxon": "0.0.11",
     "terraformer-wkt-parser": "^1.1.0",
     "xhr": "^2.1.0"
   },
