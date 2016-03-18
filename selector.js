@@ -47,6 +47,14 @@ function updateTaxonSelector() {
     setDataFilter(filter);
 }
 
+function updateMap(map) {
+    var dataFilter = getDataFilter();
+    dataFilter.zoom = map.getZoom();
+    dataFilter.lat = map.getCenter().lat;
+    dataFilter.lng = map.getCenter().lng;
+    setDataFilter(dataFilter);
+}
+
 function updateTraitSelector() {
     var filter = getDataFilter();
     filter.traitSelector = collectSelectors('.traitFilterElement');
@@ -170,18 +178,13 @@ selectors.createSelectors = function () {
     });
 
     map.on('draw:edited draw:deleted', function (e) {
-        console.log('hello');
         if (updateGeospatialSelector(selectedAreas)) {
             ee.emit('update');
         }
     });
 
     map.on('moveend dragend zoomend', function (e) {
-        var dataFilter = getDataFilter();
-        dataFilter.zoom = map.getZoom();
-        dataFilter.lat = map.getCenter().lat;
-        dataFilter.lng = map.getCenter().lng;
-        setDataFilter(dataFilter);
+        updateMap(map);
         ee.emit('update');
     });
 
@@ -263,6 +266,7 @@ selectors.createSelectors = function () {
     var updateSelectors = function () {
         updateTaxonSelector();
         updateTraitSelector();
+        updateMap(map);
         updateGeospatialSelector(selectedAreas);
     };
 
