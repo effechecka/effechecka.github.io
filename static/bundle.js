@@ -20525,7 +20525,7 @@ var updateDownloadURL = function (selector) {
     util.removeChildren("#download");
 
     var dataFilter = selector.getDataFilter();
-    dataFilter.limit = 1024 * 4;
+    dataFilter.limit = 1024 * 1024;
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
@@ -21171,7 +21171,7 @@ util.wktEnvelopeToPolygon = function(wktString) {
 util.urlForOccurrence = function(occurrence) {
   var sourceMap = { 'inaturalist': { prefix: '', suffix: '' },
     'gbif': { prefix: 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=', suffix: ''},
-    'idigbio': { prefix: 'http://search.idigbio.org/v2/search/records?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
+    'idigbio': { prefix: 'http://portal.idigbio.org/search?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
 
   var sourceValue = sourceMap[occurrence.source];
   var idUrl;
