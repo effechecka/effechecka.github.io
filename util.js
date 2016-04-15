@@ -213,7 +213,7 @@ util.wktEnvelopeToPolygon = function(wktString) {
 util.urlForOccurrence = function(occurrence) {
   var sourceMap = { 'inaturalist': { prefix: '', suffix: '' },
     'gbif': { prefix: 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=', suffix: ''},
-    'idigbio': { prefix: 'http://search.idigbio.org/v2/search/records?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
+    'idigbio': { prefix: 'http://portal.idigbio.org/search?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
 
   var sourceValue = sourceMap[occurrence.source];
   var idUrl;

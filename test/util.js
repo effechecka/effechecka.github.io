@@ -14,7 +14,7 @@ test('source,id to url', function(t) {
   t.equal(u.urlForOccurrence(inat), 'http://www.inaturalist.org/observations/1035877');
   t.equal(u.urlForOccurrence(gbif), 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=URN%3Acatalog%3ACLO%3AEBIRD%3AOBS153095840');
 
-  var idigbioExpected = 'http://search.idigbio.org/v2/search/records?rq={%22occurrenceid%22:%22urn%3Acatalog%3Aucmp%3Ap%3A153071%22}';
+  var idigbioExpected = 'http://portal.idigbio.org/search?rq={%22occurrenceid%22:%22urn%3Acatalog%3Aucmp%3Ap%3A153071%22}';
   t.equal(u.urlForOccurrence(idigbio), idigbioExpected); 
 
   var unknown = { source: 'something', id: 'other' };

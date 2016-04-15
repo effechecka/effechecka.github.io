@@ -108,7 +108,7 @@ var updateDownloadURL = function (selector) {
     util.removeChildren("#download");
 
     var dataFilter = selector.getDataFilter();
-    dataFilter.limit = 1024 * 4;
+    dataFilter.limit = 1024 * 1024;
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
