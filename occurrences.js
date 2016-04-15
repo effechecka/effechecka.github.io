@@ -46,21 +46,21 @@ function renderOccurrenceItems(occurrences, resp) {
             path.appendChild(elem);
         });
         row.appendChild(path);
-        var recordCount = document.createElement('td');
+        var recordCount = row.appendChild(document.createElement('td'));
         recordCount.textContent = item.lat;
-        row.appendChild(recordCount);
-        recordCount = document.createElement('td');
+        recordCount = row.appendChild(document.createElement('td'));
         recordCount.textContent = item.lng;
-        row.appendChild(recordCount);
-        recordCount = document.createElement('td');
+        recordCount = row.appendChild(document.createElement('td'));
         recordCount.textContent = new Date(item.start).toISOString();
-        row.appendChild(recordCount);
-        recordCount = document.createElement('td');
-        recordCount.textContent = item.id;
-        row.appendChild(recordCount);
-        recordCount = document.createElement('td');
+        recordCount = row.appendChild(document.createElement('td'));
+        var occUrl = recordCount.appendChild(document.createElement('a'));
+        occUrl.setAttribute('href', util.urlForOccurrence(item));
+        occUrl.setAttribute('title', 'visit associated external url');
+        occUrl.setAttribute('target', '_blank');
+        occUrl.textContent = item.id;
+        recordCount = row.appendChild(document.createElement('td'));
         recordCount.textContent = new Date(item.added).toISOString();
-        row.appendChild(recordCount);
+        
         occurrences.appendChild(row);
     });
 }
@@ -97,10 +97,10 @@ var addOccurrencesDownloadLink = function (items) {
     var csvString = items.reduce(function (agg, item) {
         if (item.taxon && item.start) {
             var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id)].join(','));
+            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id), quoteString(item.source),quoteString(util.urlForOccurrence(item))].join(','));
         }
         return agg;
-    }, ['taxon name,taxon path,lat,lng,eventStartDate,occurrenceId']).join('\n');
+    }, ['taxon name,taxon path,lat,lng,eventStartDate,occurrenceId,source,url']).join('\n');
     addCSVDownloadLink('occurrences.csv', 'csv', csvString);
 }
 

@@ -210,3 +210,22 @@ util.wktEnvelopeToPolygon = function(wktString) {
     return result;
 };
 
+util.urlForOccurrence = function(occurrence) {
+  var sourceMap = { 'inaturalist': { prefix: '', suffix: '' },
+    'gbif': { prefix: 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=', suffix: ''},
+    'idigbio': { prefix: 'http://search.idigbio.org/v2/search/records?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
+
+  var sourceValue = sourceMap[occurrence.source];
+  var idUrl;
+  if (sourceValue === undefined) {
+    var subject = 'no link for fresh data source [' + occurrence.source + ']';
+    var body = 'please add a url mapper for source [' + occurrence.source + ']';
+    idUrl = "http://github.com/gimmefreshdata/freshdata/issues/new?title=" + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  } else if (sourceValue.prefix.length == 0 && sourceValue.suffix.length == 0) {
+    idUrl = occurrence.id;
+  } else {
+    idUrl = sourceValue.prefix + encodeURIComponent(occurrence.id) + sourceValue.suffix;
+  }
+  return idUrl; 
+};
+
