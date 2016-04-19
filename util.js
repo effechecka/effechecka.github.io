@@ -77,12 +77,13 @@ util.capitalize = function (taxonName) {
 util.createRequestURL = function (dataFilter, endpoint) {
     return 'http://apihack-c18.idigbio.org/' + endpoint + Object.keys(dataFilter)
         .reduce(function (accum, key) {
-        if (dataFilter[key] !== null) {
-            return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
-        } else {
-            return accum;
-        }
-    }, '?');
+            var filterValue = dataFilter[key]
+            if (filterValue !== undefined && filterValue.length > 0) {
+                return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
+            } else {
+                return accum;
+            }
+        }, '?');
 };
 
 util.quoteString = function (str) {
@@ -188,16 +189,18 @@ util.geometryCollectionToWktStrings = function (collectionWkt) {
         }, []);
     }
 
-    return wktStrings.map(function(str) { return util.wktEnvelopeToPolygon(str); });
+    return wktStrings.map(function (str) {
+        return util.wktEnvelopeToPolygon(str);
+    });
 };
 
-util.wktEnvelopeToPolygon = function(wktString) {
+util.wktEnvelopeToPolygon = function (wktString) {
     var envPrefix = "ENVELOPE(";
     var opening = wktString.indexOf(envPrefix);
     var result = wktString;
     if (opening > -1) {
         var closing = wktString.lastIndexOf(")");
-        var latLngs = wktString.substring(opening+envPrefix.length, closing).split(",");
+        var latLngs = wktString.substring(opening + envPrefix.length, closing).split(",");
         if (latLngs.length === 4) {
             var lngMin = latLngs[0];
             var lngMax = latLngs[1];
@@ -209,22 +212,22 @@ util.wktEnvelopeToPolygon = function(wktString) {
     return result;
 };
 
-util.urlForOccurrence = function(occurrence) {
-  var sourceMap = { 'inaturalist': { prefix: '', suffix: '' },
-    'gbif': { prefix: 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=', suffix: ''},
-    'idigbio': { prefix: 'http://portal.idigbio.org/search?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
+util.urlForOccurrence = function (occurrence) {
+    var sourceMap = { 'inaturalist': { prefix: '', suffix: '' },
+        'gbif': { prefix: 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=', suffix: ''},
+        'idigbio': { prefix: 'http://portal.idigbio.org/search?rq={%22occurrenceid%22:%22', suffix: '%22}'}};
 
-  var sourceValue = sourceMap[occurrence.source];
-  var idUrl;
-  if (sourceValue === undefined) {
-    var subject = 'no link for fresh data source [' + occurrence.source + ']';
-    var body = 'please add a url mapper for source [' + occurrence.source + ']';
-    idUrl = "http://github.com/gimmefreshdata/freshdata/issues/new?title=" + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  } else if (sourceValue.prefix.length == 0 && sourceValue.suffix.length == 0) {
-    idUrl = occurrence.id;
-  } else {
-    idUrl = sourceValue.prefix + encodeURIComponent(occurrence.id) + sourceValue.suffix;
-  }
-  return idUrl; 
+    var sourceValue = sourceMap[occurrence.source];
+    var idUrl;
+    if (sourceValue === undefined) {
+        var subject = 'no link for fresh data source [' + occurrence.source + ']';
+        var body = 'please add a url mapper for source [' + occurrence.source + ']';
+        idUrl = "http://github.com/gimmefreshdata/freshdata/issues/new?title=" + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    } else if (sourceValue.prefix.length == 0 && sourceValue.suffix.length == 0) {
+        idUrl = occurrence.id;
+    } else {
+        idUrl = sourceValue.prefix + encodeURIComponent(occurrence.id) + sourceValue.suffix;
+    }
+    return idUrl;
 };
 
