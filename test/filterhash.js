@@ -29,6 +29,12 @@ test('traitselector exists, but is empty', function (t) {
     t.deepEqual(filter, { traitSelector: '' });
 });
 
+test('filter exists, and has a number', function (t) {
+    t.plan(1);
+    var filter = datafilter.fromHash('limit=10', {});
+    t.deepEqual(filter, { limit: '10' });
+});
+
 test('traitselector does not exist, but is empty', function (t) {
     t.plan(1);
     var filter = datafilter.fromHash('taxonSelector=', { traitSelector: 'some default'});

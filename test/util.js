@@ -4,6 +4,13 @@ var u = require('../util.js');
 var wkt = require('terraformer-wkt-parser');
 
 
+test('create request url', function(t) {
+  t.plan(2);
+
+  t.equal(u.createRequestURL({ limit: 10 }, 'endpoint'), 'http://apihack-c18.idigbio.org/endpoint?limit=10');
+  t.equal(u.createRequestURL({ limit: 10, foo: 'bar' }, 'endpoint'), 'http://apihack-c18.idigbio.org/endpoint?limit=10&foo=bar');
+});
+
 test('source,id to url', function(t) {
   t.plan(4);
 
@@ -15,7 +22,7 @@ test('source,id to url', function(t) {
   t.equal(u.urlForOccurrence(gbif), 'http://www.gbif.org/occurrence/search?OCCURRENCE_ID=URN%3Acatalog%3ACLO%3AEBIRD%3AOBS153095840');
 
   var idigbioExpected = 'http://portal.idigbio.org/search?rq={%22occurrenceid%22:%22urn%3Acatalog%3Aucmp%3Ap%3A153071%22}';
-  t.equal(u.urlForOccurrence(idigbio), idigbioExpected); 
+  t.equal(u.urlForOccurrence(idigbio), idigbioExpected);
 
   var unknown = { source: 'something', id: 'other' };
   var expectedOpenIssueLink = 'http://github.com/gimmefreshdata/freshdata/issues/new?title=no%20link%20for%20fresh%20data%20source%20%5Bsomething%5D&body=please%20add%20a%20url%20mapper%20for%20source%20%5Bsomething%5D';

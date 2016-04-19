@@ -15,7 +15,7 @@ util.removeChildren = function (selector) {
 
 util.fromHash = function (hash, defaultFilter) {
     var filter = defaultFilter || {};
-    return extend(defaultFilter, queryString.parse(hash));
+    return extend(filter, queryString.parse(hash));
 };
 
 util.toHash = function (filter) {
@@ -75,15 +75,20 @@ util.capitalize = function (taxonName) {
 };
 
 util.createRequestURL = function (dataFilter, endpoint) {
-    return 'http://apihack-c18.idigbio.org/' + endpoint + Object.keys(dataFilter)
+    var queryParams = Object.keys(dataFilter)
         .reduce(function (accum, key) {
-            var filterValue = dataFilter[key]
-            if (filterValue !== undefined && filterValue.length > 0) {
-                return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
-            } else {
-                return accum;
+            var filterValue = dataFilter[key];
+            var queryPart = "";
+            if (filterValue !== undefined) {
+                var filterValueString = encodeURIComponent(filterValue);
+                if (filterValueString.length > 0) {
+                    queryPart = key + '=' + encodeURIComponent(dataFilter[key]);
+                    accum.push(queryPart);
+                }
             }
-        }, '?');
+            return accum;
+        }, []).join('&');
+    return 'http://apihack-c18.idigbio.org/' + endpoint + '?' + queryParams;
 };
 
 util.quoteString = function (str) {
