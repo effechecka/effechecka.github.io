@@ -136,6 +136,7 @@ selectors.createSelectors = function () {
     };
 
     var dataFilter = util.fromHash(document.location.search || document.location.hash, filterDefaults);
+    setDataFilter(dataFilter);
 
     var zoom = parseInt(dataFilter.zoom);
     var lat = parseFloat(dataFilter.lat);
@@ -285,6 +286,7 @@ selectors.createSelectors = function () {
     };
 
     ee.getDataFilter = getDataFilter;
+    ee.setDataFilter = setDataFilter;
     return ee;
 };
 

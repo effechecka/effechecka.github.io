@@ -20,6 +20,32 @@ var init = function () {
     if (document.querySelector('#effechecka-occurrences')) {
         occurrences.select(selector);
     }
+
+    function initOccurrenceFilter(filterName) {
+        var filterElementId = 'effechecka-' + filterName;
+        var filterElem = document.getElementById(filterElementId);
+        if (filterElem) {
+            var filter = selector.getDataFilter();
+            var filterValue = filter[filterName];
+            if (filterValue !== undefined) {
+                filterElem.value = filterValue;
+            }
+
+            filterElem.addEventListener('change', function (event) {
+                var filter = selector.getDataFilter();
+                var filterValue = event.target.value;
+                if (filterValue !== undefined) {
+                    filter[filterName] = filterValue;
+                    selector.setDataFilter(filter);
+                    selector.emit('update');
+                }
+            });
+        }
+    }
+
+    initOccurrenceFilter('addedBefore');
+    initOccurrenceFilter('addedAfter');
+
     selector.init();
 };
 

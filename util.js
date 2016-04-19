@@ -75,9 +75,8 @@ util.capitalize = function (taxonName) {
 };
 
 util.createRequestURL = function (dataFilter, endpoint) {
-    return 'http://apihack-c18.idigbio.org/' + endpoint + Object.keys(dataFilter).filter(function (key) {
-        return ['taxonSelector', 'wktString', 'traitSelector', 'limit'].indexOf(key) != -1;
-    }).reduce(function (accum, key) {
+    return 'http://apihack-c18.idigbio.org/' + endpoint + Object.keys(dataFilter)
+        .reduce(function (accum, key) {
         if (dataFilter[key] !== null) {
             return accum + key + '=' + encodeURIComponent(dataFilter[key]) + '&';
         } else {
