@@ -104,10 +104,9 @@ var addOccurrencesDownloadLink = function (items) {
     addCSVDownloadLink('occurrences.csv', 'csv', csvString);
 }
 
-var updateDownloadURL = function (selector) {
+var updateDownloadURL = function (dataFilter) {
     util.removeChildren("#download");
 
-    var dataFilter = selector.getDataFilter();
     dataFilter.limit = 1024 * 4;
 
     var download = document.querySelector('#download');
@@ -128,14 +127,6 @@ var updateDownloadURL = function (selector) {
                 if (req.status === 200) {
                     var resp = JSON.parse(req.responseText);
                     if (resp.items) {
-                        var header = document.querySelector('#occurrencesHeader');
-                        if (header) {
-                            var headerText = resp.items.length + ' occurrences items';
-                            if (resp.items.length > 20) {
-                                headerText = headerText.concat(' (first 20 shown)');
-                            }
-                            header.textContent = headerText;
-                        }
                         addOccurrencesDownloadLink(resp.items);
 
                         var names = resp.items.reduce(function (agg, item) {
@@ -157,12 +148,39 @@ var updateDownloadURL = function (selector) {
     }
 };
 
+var updateTableHeader = function(dataFilter) {
+    var url = util.createRequestURL(dataFilter, 'monitors');
+    var req = xhr();
+    if (req !== undefined) {
+        req.open('GET', url, true);
+        req.onreadystatechange = function () {
+            if (req.readyState === 4) {
+                if (req.status === 200) {
+                    var resp = JSON.parse(req.responseText);
+                    if (resp.recordCount) {
+                        var header = document.querySelector('#occurrencesHeader');
+                        if (header) {
+                            var headerText = resp.recordCount + ' occurrences items';
+                            if (resp.recordCount > 20) {
+                                headerText = headerText.concat(' (first 20 shown)');
+                            }
+                            header.textContent = headerText;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    req.send(null);
+};
+
 var renderOccurrences = function (resp, selector) {
     if (resp.items) {
         var occurrences = document.querySelector('#occurrences');
         if (resp.items.length > 0) {
             renderOccurrenceItems(occurrences, resp);
-            updateDownloadURL(selector);
+            updateTableHeader(selector.getDataFilter());
+            updateDownloadURL(selector.getDataFilter());
         } else {
             var statusMap = { requested: "working on your occurrences..." };
             var statusMsg = statusMap[resp.status] || resp.status;

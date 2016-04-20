@@ -133,6 +133,7 @@ util.addHyperlinksForNames = function (nameAndPageIds) {
             var linkElem = document.createElement('a');
             linkElem.setAttribute('class', elemId);
             linkElem.setAttribute('href', 'http://eol.org/pages/' + nameAndPageId.id);
+            linkElem.setAttribute('target', '_blank');
             linkElem.textContent = nameAndPageId.name;
             linkElem.setAttribute('title', 'resolved EOL page for [' + nameAndPageId.name + '] using http://resolver.globalnames.org');
             var elemParent = elem.parentNode;
