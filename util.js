@@ -1,5 +1,6 @@
 var queryString = require('query-string');
 var extend = require('extend');
+var deepEqual = require('deep-equal');
 
 var util = {};
 
@@ -74,6 +75,10 @@ util.capitalize = function (taxonName) {
     return capitalizedName;
 };
 
+var requestHost = function() {
+   return 'apihack-c18.idigbio.org';
+}
+
 util.createRequestURL = function (dataFilter, endpoint) {
     var queryParams = Object.keys(dataFilter)
         .reduce(function (accum, key) {
@@ -88,7 +93,7 @@ util.createRequestURL = function (dataFilter, endpoint) {
             }
             return accum;
         }, []).join('&');
-    return 'http://apihack-c18.idigbio.org/' + endpoint + '?' + queryParams;
+    return 'http://' + requestHost() + '/' + endpoint + '?' + queryParams;
 };
 
 util.quoteString = function (str) {
@@ -235,5 +240,28 @@ util.urlForOccurrence = function (occurrence) {
         idUrl = sourceValue.prefix + encodeURIComponent(occurrence.id) + sourceValue.suffix;
     }
     return idUrl;
+};
+
+util.enableFeed = function(callback, dataFilter) {
+    var feed = new WebSocket('ws://' + requestHost() + ":8888/feed");
+    feed.onmessage = function(event) {
+        var feedData = JSON.parse(event.data);
+        if (dataFilter === undefined || util.deepEqualIgnoreEmpty(dataFilter, feedData)) {
+            callback(feedData);
+        }
+    };
+};
+
+util.deepEqualIgnoreEmpty = function (a, b) {
+    var removeEmptyKeys = function (obj) {
+        return Object.keys(obj).filter(function (key) {
+            var value = obj[key];
+            return value !== undefined && value.length > 0;
+        }).reduce(function (agg, key) {
+            agg[key] = obj[key];
+            return agg;
+        }, {});
+    };
+    return a !== undefined && b !== undefined && deepEqual(removeEmptyKeys(a), removeEmptyKeys(b));
 };
 

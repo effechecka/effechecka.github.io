@@ -47,6 +47,32 @@ var init = function () {
     initOccurrenceFilter('addedAfter');
 
     selector.init();
+
+    function initFeed() {
+        if (document.getElementById('occurrenceProgress')) {
+            util.enableFeed(function (monitorStatus) {
+                var dataFilter = selector.getDataFilter();
+                var selectorWebContext = { taxonSelector: dataFilter['taxonSelector'].replace(/,/g, "|"), wktString: dataFilter['wktString'], traitSelector: dataFilter['traitSelector']};
+                var selectorFeedContext = monitorStatus.selector;
+
+                if (util.deepEqualIgnoreEmpty(selectorWebContext, selectorFeedContext)) {
+                    var feedElem = document.getElementById('occurrenceProgress');
+                    if (feedElem) {
+                        feedElem.textContent = ' (' + monitorStatus.percentComplete + '%)';
+                    }
+                    var feedStatus = document.getElementById('occurrencesStatus')
+                    if (feedStatus) {
+                        if (status === 'ready') {
+                            selector.emit('update');
+                        }
+                        feedStatus.textContent = monitorStatus.status;
+                    }
+                }
+            });
+        }
+    }
+
+    initFeed();
 };
 
 window.addEventListener('load', function () {

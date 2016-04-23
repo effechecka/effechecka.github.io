@@ -71,3 +71,16 @@ test('default hash', function (t) {
     t.deepEqual(datafilter.fromHash(hashDefault), expectedDefault);
 });
 
+test('compare selector', function (t) {
+    t.plan(1);
+    var aMonitor = {"selector": {
+        "taxonSelector": "Aves|Insecta",
+        "wktString": "POLYGON ((-72.1 41.5, -72.1 43.1, -69.9 43.1, -70.11474609375 41.64007838467894, -72.1 41.5))",
+        "traitSelector": ""}};
+    var anotherMonitor = { "status": "bla", "selector": {
+        "taxonSelector": "Aves|Insecta",
+        "wktString": "POLYGON ((-72.1 41.5, -72.1 43.1, -69.9 43.1, -70.11474609375 41.64007838467894, -72.1 41.5))"}};
+
+    t.ok(datafilter.deepEqualIgnoreEmpty(aMonitor.selector, anotherMonitor.selector));
+});
+
