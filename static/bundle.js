@@ -360,7 +360,7 @@ var init = function () {
                     }
                     var feedStatus = document.getElementById('occurrencesStatus')
                     if (feedStatus) {
-                        if (status === 'ready') {
+                        if (monitorStatus.status === 'ready') {
                             selector.emit('update');
                         }
                         feedStatus.textContent = monitorStatus.status + "...";
