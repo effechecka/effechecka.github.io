@@ -356,14 +356,14 @@ var init = function () {
                 if (util.deepEqualIgnoreEmpty(selectorWebContext, selectorFeedContext)) {
                     var feedElem = document.getElementById('occurrenceProgress');
                     if (feedElem) {
-                        feedElem.textContent = '&nbsp;(' + monitorStatus.percentComplete + '%)';
+                        feedElem.textContent = '(' + monitorStatus.percentComplete + '%)';
                     }
                     var feedStatus = document.getElementById('occurrencesStatus')
                     if (feedStatus) {
                         if (status === 'ready') {
                             selector.emit('update');
                         }
-                        feedStatus.textContent = monitorStatus.status;
+                        feedStatus.textContent = monitorStatus.status + "...";
                     }
                 }
             });
