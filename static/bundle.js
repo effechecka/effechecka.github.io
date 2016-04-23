@@ -361,7 +361,7 @@ var init = function () {
                     var feedStatus = document.getElementById('occurrencesStatus')
                     if (feedStatus) {
                         if (monitorStatus.status === 'ready') {
-                            selector.emit('update');
+                            selector.emit(monitorStatus.status);
                         }
                         feedStatus.textContent = monitorStatus.status + "...";
                     }
