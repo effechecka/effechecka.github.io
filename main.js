@@ -58,7 +58,7 @@ var init = function () {
                 if (util.deepEqualIgnoreEmpty(selectorWebContext, selectorFeedContext)) {
                     var feedElem = document.getElementById('occurrenceProgress');
                     if (feedElem) {
-                        feedElem.textContent = ' (' + monitorStatus.percentComplete + '%)';
+                        feedElem.textContent = '&nbsp;(' + monitorStatus.percentComplete + '%)';
                     }
                     var feedStatus = document.getElementById('occurrencesStatus')
                     if (feedStatus) {
