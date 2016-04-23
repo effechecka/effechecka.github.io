@@ -17828,7 +17828,7 @@ var taxon = {};
 
 taxon.resolverUrlFor = function(names) {
   var namesString = encodeURIComponent(names.join('|'));
-  return 'http://res.globalnames.org/name_resolvers.json?names=' + namesString + '&data_source_ids=12';
+  return 'http://resolver.globalnames.org/name_resolvers.json?names=' + namesString + '&data_source_ids=12';
 };
 
 taxon.eolPageIdsFor = function(names, callback) {
