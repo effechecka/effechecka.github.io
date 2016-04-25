@@ -111,7 +111,7 @@ var updateDownloadURL = function (dataFilter) {
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
-        .textContent = 'save up to [' + dataFilter.limit + '] occurrences items as ';
+        .textContent = 'save up to [' + dataFilter.limit + '] occurrences as ';
 
     var url = createOccurrencesURL(dataFilter);
     var jsonRef = download.appendChild(document.createElement("a"));
@@ -160,7 +160,7 @@ var updateTableHeader = function(dataFilter) {
                     if (resp.recordCount) {
                         var header = document.querySelector('#occurrencesHeader');
                         if (header) {
-                            var headerText = resp.recordCount + ' occurrences items';
+                            var headerText = resp.recordCount + ' occurrences';
                             if (resp.recordCount > 20) {
                                 headerText = headerText.concat(' (first 20 shown)');
                             }
