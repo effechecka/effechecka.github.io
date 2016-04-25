@@ -49,23 +49,19 @@ var init = function () {
     selector.init();
 
     function initFeed() {
-        if (document.getElementById('occurrenceProgress')) {
+        if (document.getElementById('occurrencesStatus')) {
             util.enableFeed(function (monitorStatus) {
                 var dataFilter = selector.getDataFilter();
                 var selectorWebContext = { taxonSelector: dataFilter['taxonSelector'].replace(/,/g, "|"), wktString: dataFilter['wktString'], traitSelector: dataFilter['traitSelector']};
                 var selectorFeedContext = monitorStatus.selector;
 
                 if (util.deepEqualIgnoreEmpty(selectorWebContext, selectorFeedContext)) {
-                    var feedElem = document.getElementById('occurrenceProgress');
-                    if (feedElem) {
-                        feedElem.textContent = '(' + monitorStatus.percentComplete + '%)';
-                    }
-                    var feedStatus = document.getElementById('occurrencesStatus')
+                    var feedStatus = document.getElementById('occurrencesStatus');
                     if (feedStatus) {
                         if (monitorStatus.status === 'ready') {
                             selector.emit(monitorStatus.status);
                         }
-                        feedStatus.textContent = monitorStatus.status + "...";
+                        feedStatus.textContent = monitorStatus.status + ' (' + monitorStatus.percentComplete + '%)';
                     }
                 }
             });

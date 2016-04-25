@@ -11,7 +11,7 @@ function renderOccurrenceItems(occurrences, resp) {
     var headerRow = document.createElement('tr');
     var header = document.createElement('th');
     header.setAttribute('id', 'occurrencesHeader');
-    header.textContent = 'occurrences items';
+    header.textContent = 'occurrence items';
     headerRow.appendChild(header);
     header = document.createElement('th');
     header.textContent = 'lat';
