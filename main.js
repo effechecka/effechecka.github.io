@@ -31,7 +31,7 @@ var init = function () {
                 filterElem.value = filterValue;
             }
 
-            filterElem.addEventListener('change', function (event) {
+            filterElem.addEventListener('keyup', function (event) {
                 var filter = selector.getDataFilter();
                 var filterValue = event.target.value;
                 if (filterValue !== undefined) {

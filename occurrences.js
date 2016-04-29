@@ -10,8 +10,7 @@ function renderOccurrenceItems(occurrences, resp) {
     occurrences.setAttribute('data-results', resp.results);
     var headerRow = document.createElement('tr');
     var header = document.createElement('th');
-    header.setAttribute('id', 'occurrencesHeader');
-    header.textContent = 'occurrence items';
+    header.textContent = 'taxa';
     headerRow.appendChild(header);
     header = document.createElement('th');
     header.textContent = 'lat';
@@ -70,8 +69,8 @@ function xhr() {
 }
 
 function clearOccurrences() {
-    util.removeChildren('.effechecka-results');
-    util.removeChildren('.effechecka-status');
+    util.removeChildrenAll('.effechecka-results');
+    util.removeChildrenAll('.effechecka-status');
     setOccurrencesStatus('none requested');
 }
 
@@ -111,7 +110,7 @@ var updateDownloadURL = function (dataFilter) {
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
-        .textContent = 'save up to [' + dataFilter.limit + '] occurrences as ';
+        .textContent = '... save as ';
 
     var url = createOccurrencesURL(dataFilter);
     var jsonRef = download.appendChild(document.createElement("a"));
@@ -158,11 +157,11 @@ var updateTableHeader = function (dataFilter) {
                 if (req.status === 200) {
                     var resp = JSON.parse(req.responseText);
                     if (resp.recordCount) {
-                        var header = document.querySelector('#occurrencesHeader');
+                        var header = document.querySelector('#effechecka-occurrences-summary');
                         if (header) {
-                            var headerText = resp.recordCount + ' occurrences';
+                            var headerText = '[' + resp.recordCount + '] matching occurrences';
                             if (resp.recordCount > 20) {
-                                headerText = headerText.concat(' (first 20 shown)');
+                                headerText = headerText.concat(' (first 20 shown below)');
                             }
                             header.textContent = headerText;
                         }
@@ -234,7 +233,7 @@ occurrences.select = function (selector) {
     };
 
     clearOccurrences();
-    ['#requestOccurrences', '#refreshOccurrences'].forEach(function (id) {
+    ['#requestOccurrences'].forEach(function (id) {
         addRequestHandler(id)
     });
 
@@ -302,7 +301,8 @@ occurrences.select = function (selector) {
         statusQuery: '.effechecka-notification-test-status',
         statusText: 'Subscribers should be notified immediately if search was already initialized and occurrences exists that matches the search criteria.'
     });
-addButtonListeners({
+
+    addButtonListeners({
         endpoint: 'update',
         buttonQuery: '#effechecka-update-test',
         statusQuery: '.effechecka-update-test-status',

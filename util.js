@@ -14,6 +14,16 @@ util.removeChildren = function (selector) {
     return checklist;
 };
 
+util.removeChildrenAll = function (selector) {
+    var parents = document.querySelectorAll(selector);
+    for (var index = 0; index < parents.length; index++) {
+        var checklist = parents[index];
+        while (checklist && checklist.firstChild) {
+            checklist.removeChild(checklist.firstChild);
+        }
+    }
+};
+
 util.fromHash = function (hash, defaultFilter) {
     var filter = defaultFilter || {};
     return extend(filter, queryString.parse(hash));
@@ -75,8 +85,8 @@ util.capitalize = function (taxonName) {
     return capitalizedName;
 };
 
-var requestHost = function() {
-   return 'apihack-c18.idigbio.org';
+var requestHost = function () {
+    return 'apihack-c18.idigbio.org';
 }
 
 util.createRequestURL = function (dataFilter, endpoint) {
@@ -242,9 +252,9 @@ util.urlForOccurrence = function (occurrence) {
     return idUrl;
 };
 
-util.enableFeed = function(callback, dataFilter) {
+util.enableFeed = function (callback, dataFilter) {
     var feed = new WebSocket('ws://' + requestHost() + ":8888/feed");
-    feed.onmessage = function(event) {
+    feed.onmessage = function (event) {
         var feedData = JSON.parse(event.data);
         if (dataFilter === undefined || util.deepEqualIgnoreEmpty(dataFilter, feedData)) {
             callback(feedData);
