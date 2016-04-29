@@ -238,6 +238,35 @@ occurrences.select = function (selector) {
         addRequestHandler(id)
     });
 
+    var subscribeButton = document.querySelector('#effechecka-subscribe');
+    if (subscribeButton) {
+        subscribeButton.addEventListener('click', function (event) {
+            var emailInput = document.querySelector('#effechecka-email');
+            if (emailInput && !emailInput.validity.typeMismatch) {
+                var emailAddress = emailInput.value;
+                var dataFilter = selector.getDataFilter();
+                dataFilter['subscriber'] = 'mailto:' + emailAddress;
+                var subscribeUrl = util.createRequestURL(dataFilter, 'subscribe');
+                var req = xhr();
+                if (req !== undefined) {
+                    req.open('GET', subscribeUrl, true);
+                    req.onreadystatechange = function () {
+                        if (req.readyState === 4) {
+                            if (req.status === 200) {
+                                var subscribeStatus = document.querySelector('#effechecka-subscribe-status');
+                                if (subscribeStatus) {
+                                    subscribeStatus.textContent = "[" + emailAddress + "] is now subscribed: you should receive a confirmation email shortly.";
+                                }
+                            }
+                        }
+                    }
+                }
+                req.send(null);
+            }
+        }, false);
+    }
+
+
     var updateLists = function () {
         clearOccurrences();
     };
