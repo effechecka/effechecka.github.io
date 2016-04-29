@@ -299,15 +299,8 @@ occurrences.select = function (selector) {
     addButtonListeners({
         endpoint: 'notify',
         buttonQuery: '#effechecka-notification-test',
-        statusQuery: '.effechecka-notification-test-status',
+        statusQuery: '#effechecka-notification-test-status',
         statusText: 'Subscribers should be notified immediately if search was already initialized and occurrences exists that matches the search criteria.'
-    });
-
-    addButtonListeners({
-        endpoint: 'update',
-        buttonQuery: '#effechecka-update-test',
-        statusQuery: '.effechecka-update-test-status',
-        statusText: 'Re-initializing search (might take a while). Subscribers should be notified when occurrences are found that match the search criteria.'
     });
 
     var updateLists = function () {
