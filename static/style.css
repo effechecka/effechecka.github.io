@@ -31,3 +31,7 @@ input:invalid {
 input:valid {
     border: 1px solid green;
 }
+
+tr.occurrence:nth-child(even) {
+    background: #ccc;
+}

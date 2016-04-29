@@ -9,6 +9,7 @@ module.exports = occurrences;
 function renderOccurrenceItems(occurrences, resp) {
     occurrences.setAttribute('data-results', resp.results);
     var headerRow = document.createElement('tr');
+    headerRow.setAttribute('class', 'occurrence');
     var header = document.createElement('th');
     header.textContent = 'taxa';
     headerRow.appendChild(header);
