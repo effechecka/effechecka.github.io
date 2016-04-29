@@ -20603,7 +20603,6 @@ module.exports = occurrences;
 function renderOccurrenceItems(occurrences, resp) {
     occurrences.setAttribute('data-results', resp.results);
     var headerRow = document.createElement('tr');
-    headerRow.setAttribute('class', 'occurrence');
     var header = document.createElement('th');
     header.textContent = 'taxa';
     headerRow.appendChild(header);
@@ -20625,6 +20624,7 @@ function renderOccurrenceItems(occurrences, resp) {
     occurrences.appendChild(headerRow);
     resp.items.forEach(function (item) {
         var row = document.createElement('tr');
+        row.setAttribute('class', 'occurrence');
         var path = document.createElement('td');
         var pathElems = item.taxon.split('|').reduce(function (pathFull, pathPartValue) {
             if (pathPartValue.length == 0) {
