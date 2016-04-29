@@ -1,10 +1,13 @@
 <br/>
-<p>Include occurrences added to Fresh Data after <input id="effechecka-addedAfter" placeholder="enter start date (if any)" autocomplete="off"> and
-    before <input id="effechecka-addedBefore" placeholder="enter end date (if any)" autocomplete="off">.</p>
+<p>Include occurrences added first to Fresh Data after <input id="effechecka-addedAfter" placeholder="e.g. 2015-02-18" autocomplete="off"> and
+    before <input id="effechecka-addedBefore" placeholder="e.g. 2016-12-23" autocomplete="off">.</p>
 
 <p>If you'd like to be notified when new data is added that match these criteria, please enter your email address <input id="effechecka-email" placeholder="your email address" type="email" autocomplete="off"> and click
-    <button id="effechecka-subscribe">subscribe</button>. <span id="effechecka-subscribe-status"></span>
+    <button id="effechecka-subscribe">subscribe</button>. <span id="effechecka-subscribe-status" class="effechecka-status"></span>
 </p>
+
+<p><b>Testing Zone</b>. You can test notifications for *all* subscribers to this fresh data search by clicking <button id="effechecka-notification-test">trigger notification</button>. <span id="effechecka-notification-test-status" class="effechecka-status"></span>
+    Also, you can test notifications by re-building the occurrence list from scratch by clicking <button id="effechecka-update-test">re-initialize search</button>. <span id="effechecka-update-test-status" class="effechecka-status"></span></p>
 
 <div id="occurrences-controls">
     <button id="requestOccurrences">request occurrences</button>
@@ -15,7 +18,7 @@
 </div>
 <div id="occurrences-results">
     <br/>
-    <div id="download"></div>
+    <div id="download" class="effechecka-results"></div>
     <br/>
-    <table id="occurrences"></table>
+    <table id="occurrences" class="effechecka-results"></table>
 </div>

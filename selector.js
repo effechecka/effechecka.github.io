@@ -189,7 +189,7 @@ selectors.createSelectors = function () {
         ee.emit('update');
     });
 
-    var taxonFilterNames = dataFilter.taxonSelector.split(',').filter(function (name) {
+    var taxonFilterNames = dataFilter.taxonSelector.split(/[|,]/).filter(function (name) {
         return name.length > 0;
     });
 
@@ -197,7 +197,7 @@ selectors.createSelectors = function () {
         addTaxonFilterElement(taxonName);
     });
 
-    var traitFilters = dataFilter.traitSelector.split(',').filter(function (name) {
+    var traitFilters = dataFilter.traitSelector.split(/[|,]/).filter(function (name) {
         return name.length > 0;
     });
     traitFilters.forEach(function (traitFilter) {

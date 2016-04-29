@@ -60,7 +60,7 @@ function renderOccurrenceItems(occurrences, resp) {
         occUrl.textContent = item.id;
         recordCount = row.appendChild(document.createElement('td'));
         recordCount.textContent = new Date(item.added).toISOString();
-        
+
         occurrences.appendChild(row);
     });
 }
@@ -70,9 +70,8 @@ function xhr() {
 }
 
 function clearOccurrences() {
-    util.removeChildren('#occurrences');
-    util.removeChildren('#download');
-    util.removeChildren('#effechecka-subscribe-status');
+    util.removeChildren('.effechecka-results');
+    util.removeChildren('.effechecka-status');
     setOccurrencesStatus('none requested');
 }
 
@@ -98,7 +97,7 @@ var addOccurrencesDownloadLink = function (items) {
     var csvString = items.reduce(function (agg, item) {
         if (item.taxon && item.start) {
             var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id), quoteString(item.source),quoteString(util.urlForOccurrence(item))].join(','));
+            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id), quoteString(item.source), quoteString(util.urlForOccurrence(item))].join(','));
         }
         return agg;
     }, ['taxon name,taxon path,lat,lng,eventStartDate,occurrenceId,source,url']).join('\n');
@@ -137,7 +136,7 @@ var updateDownloadURL = function (dataFilter) {
                             return agg;
                         }, []);
                         setOccurrencesStatus('linking to eol pages...');
-                        taxon.eolPageIdsFor(names, function(namesAndIds) {
+                        taxon.eolPageIdsFor(names, function (namesAndIds) {
                             util.addHyperlinksForNames(namesAndIds);
                             setOccurrencesStatus("ready");
                         });
@@ -149,7 +148,7 @@ var updateDownloadURL = function (dataFilter) {
     }
 };
 
-var updateTableHeader = function(dataFilter) {
+var updateTableHeader = function (dataFilter) {
     var url = util.createRequestURL(dataFilter, 'monitors');
     var req = xhr();
     if (req !== undefined) {
@@ -269,6 +268,46 @@ occurrences.select = function (selector) {
         }, false);
     }
 
+
+    var addButtonListeners = function(buttonConfig) {
+        var notificationButton = document.querySelector(buttonConfig.buttonQuery);
+        if (notificationButton) {
+            notificationButton.addEventListener('click', function (event) {
+                var dataFilter = selector.getDataFilter();
+                var subscribeUrl = util.createRequestURL(dataFilter, buttonConfig.endpoint);
+                var req = xhr();
+                if (req !== undefined) {
+                    req.open('GET', subscribeUrl, true);
+                    req.onreadystatechange = function () {
+                        if (req.readyState === 4) {
+                            if (req.status === 200) {
+                                var statusElem = document.querySelector(buttonConfig.statusQuery);
+                                if (statusElem) {
+                                    util.removeChildren(buttonConfig.statusQuery);
+                                    var status = statusElem.appendChild(document.createElement('span'));
+                                    status.textContent = buttonConfig.statusText;
+                                }
+                            }
+                        }
+                    }
+                }
+                req.send(null);
+            }, false);
+        }
+    }
+
+    addButtonListeners({
+        endpoint: 'notify',
+        buttonQuery: '#effechecka-notification-test',
+        statusQuery: '.effechecka-notification-test-status',
+        statusText: 'Subscribers should be notified immediately if search was already initialized and occurrences exists that matches the search criteria.'
+    });
+addButtonListeners({
+        endpoint: 'update',
+        buttonQuery: '#effechecka-update-test',
+        statusQuery: '.effechecka-update-test-status',
+        statusText: 'Re-initializing search (might take a while). Subscribers should be notified when occurrences are found that match the search criteria.'
+    });
 
     var updateLists = function () {
         clearOccurrences();
