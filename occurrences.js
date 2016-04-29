@@ -72,6 +72,7 @@ function xhr() {
 function clearOccurrences() {
     util.removeChildren('#occurrences');
     util.removeChildren('#download');
+    util.removeChildren('#effechecka-subscribe-status');
     setOccurrencesStatus('none requested');
 }
 
@@ -255,7 +256,9 @@ occurrences.select = function (selector) {
                             if (req.status === 200) {
                                 var subscribeStatus = document.querySelector('#effechecka-subscribe-status');
                                 if (subscribeStatus) {
-                                    subscribeStatus.textContent = "[" + emailAddress + "] is now subscribed: you should receive a confirmation email shortly.";
+                                    util.removeChildren('#effechecka-subscribe-status');
+                                    var status = subscribeStatus.appendChild(document.createElement('span'));
+                                    status.textContent = "[" + emailAddress + "] is now subscribed: you should receive a confirmation email shortly.";
                                 }
                             }
                         }
