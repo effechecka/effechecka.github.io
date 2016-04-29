@@ -49,9 +49,6 @@ function updateTaxonSelector() {
 
 function updateMap(map) {
     var dataFilter = getDataFilter();
-    dataFilter.zoom = map.getZoom();
-    dataFilter.lat = map.getCenter().lat;
-    dataFilter.lng = map.getCenter().lng;
     setDataFilter(dataFilter);
 }
 
@@ -128,8 +125,7 @@ selectors.createSelectors = function () {
         updateTraitSelector();
     };
 
-    var filterDefaults = { lat: '42.31', lng: '-71.05', zoom: '7',
-        limit: 20,
+    var filterDefaults = { limit: 20,
         taxonSelector: 'Aves,Insecta',
         traitSelector: '',
         wktString: 'ENVELOPE(-72.147216796875,-69.949951171875,43.11702412135048,41.492120839687786)'
@@ -138,11 +134,7 @@ selectors.createSelectors = function () {
     var dataFilter = util.fromHash(document.location.search || document.location.hash, filterDefaults);
     setDataFilter(dataFilter);
 
-    var zoom = parseInt(dataFilter.zoom);
-    var lat = parseFloat(dataFilter.lat);
-    var lng = parseFloat(dataFilter.lng);
-
-    var map = L.map('map', {scrollWheelZoom: false}).setView([lat, lng], zoom);
+    var map = L.map('map', {scrollWheelZoom: false});
     selectors.map = map;
     var tileUrlTemplate = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
     L.tileLayer(tileUrlTemplate, {
@@ -170,6 +162,8 @@ selectors.createSelectors = function () {
         )
         ;
     map.addControl(drawControl);
+
+    map.fitBounds(selectedAreas.getBounds().pad(0.1));
 
     map.on('draw:created', function (e) {
         selectedAreas.addLayer(e.layer);
