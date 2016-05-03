@@ -107,45 +107,19 @@ var addOccurrencesDownloadLink = function (items) {
 var updateDownloadURL = function (dataFilter) {
     util.removeChildren("#download");
 
-    dataFilter.limit = 1024 * 4;
+    if (dataFilter.limit) {
+      delete dataFilter.limit;
+    }
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
         .textContent = '... save as ';
 
     var url = createOccurrencesURL(dataFilter);
-    var jsonRef = download.appendChild(document.createElement("a"));
-    jsonRef.setAttribute('href', url);
-    jsonRef.textContent = 'json';
-
-    var req = xhr();
-    if (req !== undefined) {
-        setOccurrencesStatus('downloading...');
-        req.open('GET', url, true);
-        req.onreadystatechange = function () {
-            if (req.readyState === 4) {
-                if (req.status === 200) {
-                    var resp = JSON.parse(req.responseText);
-                    if (resp.items) {
-                        addOccurrencesDownloadLink(resp.items);
-
-                        var names = resp.items.reduce(function (agg, item) {
-                            if (item.taxon) {
-                                agg = agg.concat(util.lastNameFromPath(item.taxon));
-                            }
-                            return agg;
-                        }, []);
-                        setOccurrencesStatus('linking to eol pages...');
-                        taxon.eolPageIdsFor(names, function (namesAndIds) {
-                            util.addHyperlinksForNames(namesAndIds);
-                            setOccurrencesStatus("ready");
-                        });
-                    }
-                }
-            }
-        };
-        req.send(null);
-    }
+    var url = util.createRequestURL(dataFilter, 'occurrences.csv');
+    var csvRef = download.appendChild(document.createElement("a"));
+    csvRef.setAttribute('href', url);
+    csvRef.textContent = 'csv';
 };
 
 var updateTableHeader = function (dataFilter) {
@@ -179,6 +153,20 @@ var renderOccurrences = function (resp, selector) {
         var occurrences = document.querySelector('#occurrences');
         if (resp.items.length > 0) {
             renderOccurrenceItems(occurrences, resp);
+
+            var names = resp.items.reduce(function (agg, item) {
+              if (item.taxon) {
+                agg = agg.concat(util.lastNameFromPath(item.taxon));
+              }
+              return agg;
+            }, []);
+
+            setOccurrencesStatus('linking to eol pages...');
+            taxon.eolPageIdsFor(names, function (namesAndIds) {
+              util.addHyperlinksForNames(namesAndIds);
+                            setOccurrencesStatus("ready");
+            });
+
             updateTableHeader(selector.getDataFilter());
             updateDownloadURL(selector.getDataFilter());
         } else {
