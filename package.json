@@ -26,8 +26,8 @@
   },
   "scripts": {
     "test": "tape test/*.js",
-    "watch": "watchify main.js -o static/bundle.js -dv",
-    "build": "browserify main.js > static/bundle.js"
+    "watch": "watchify main.js -o static/effechecka.js -dv",
+    "build": "browserify main.js --standalone effechecka | uglifyjs -mc > static/effechecka.js"
   },
   "repository": {
     "type": "git",

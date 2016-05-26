@@ -77,32 +77,7 @@ function clearOccurrences() {
 
 var createOccurrencesURL = function (dataFilter) {
     return util.createRequestURL(dataFilter, 'occurrences');
-
 };
-
-var addCSVDownloadLink = function (filename, label, csvString) {
-    var download = document.querySelector('#download');
-    download.appendChild(document.createElement("span")).textContent = ' or as ';
-    var csvRef = download.appendChild(document.createElement("a"));
-    csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
-    csvRef.setAttribute('download', filename);
-    csvRef.textContent = label;
-}
-
-var quoteString = function (str) {
-    return util.quoteString(str);
-};
-
-var addOccurrencesDownloadLink = function (items) {
-    var csvString = items.reduce(function (agg, item) {
-        if (item.taxon && item.start) {
-            var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-            agg = agg.concat([taxonName, quoteString(item.taxon), item.lat, item.lng, new Date(item.start).toISOString(), quoteString(item.id), quoteString(item.source), quoteString(util.urlForOccurrence(item))].join(','));
-        }
-        return agg;
-    }, ['taxon name,taxon path,lat,lng,eventStartDate,occurrenceId,source,url']).join('\n');
-    addCSVDownloadLink('occurrences.csv', 'csv', csvString);
-}
 
 var updateDownloadURL = function (dataFilter) {
     util.removeChildren("#download");
@@ -115,7 +90,6 @@ var updateDownloadURL = function (dataFilter) {
     download.appendChild(document.createElement("span"))
         .textContent = '... save as ';
 
-    var url = createOccurrencesURL(dataFilter);
     var url = util.createRequestURL(dataFilter, 'occurrences.csv');
     var csvRef = download.appendChild(document.createElement("a"));
     csvRef.setAttribute('href', url);
