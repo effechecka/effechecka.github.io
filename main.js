@@ -52,7 +52,10 @@ var init = function () {
         if (document.getElementById('occurrencesStatus')) {
             util.enableFeed(function (monitorStatus) {
                 var dataFilter = selector.getDataFilter();
-                var selectorWebContext = { taxonSelector: dataFilter['taxonSelector'].replace(/,/g, "|"), wktString: dataFilter['wktString'], traitSelector: dataFilter['traitSelector']};
+                var selectorWebContext = { taxonSelector: dataFilter['taxonSelector'].replace(/,/g, "|"),
+                    wktString: dataFilter['wktString'],
+                    traitSelector: dataFilter['traitSelector'].replace(/,/g, "|")};
+
                 var selectorFeedContext = monitorStatus.selector;
 
                 if (util.deepEqualIgnoreEmpty(selectorWebContext, selectorFeedContext)) {
