@@ -83,17 +83,46 @@ var updateDownloadURL = function (dataFilter) {
     util.removeChildren("#download");
 
     if (dataFilter.limit) {
-      delete dataFilter.limit;
+        delete dataFilter.limit;
     }
 
     var download = document.querySelector('#download');
-    download.appendChild(document.createElement("span"))
-        .textContent = '... save as ';
 
-    var url = util.createRequestURL(dataFilter, 'occurrences.csv');
-    var csvRef = download.appendChild(document.createElement("a"));
-    csvRef.setAttribute('href', url);
-    csvRef.textContent = 'csv';
+    var appendDownloadLink = function (dataFilter, text) {
+        download.appendChild(document.createElement("span"))
+            .textContent = text;
+
+        var url = util.createRequestURL(dataFilter, 'occurrences.csv');
+        var csvRef = download.appendChild(document.createElement("a"));
+        csvRef.setAttribute('href', url);
+        csvRef.textContent = 'csv';
+    };
+
+    var noAddedKeys = Object.keys(dataFilter).filter(function (key) {
+        return ['addedAfter', 'addedBefore'].indexOf(key) === -1;
+    });
+
+    var dataFilterNoAddedDate = noAddedKeys.reduce(function (agg, key) {
+        agg[key] = dataFilter[key];
+        return agg;
+    }, {});
+
+    appendDownloadLink(dataFilterNoAddedDate, '... save all records as ');
+
+    if (Object.keys(dataFilter).length !== noAddedKeys.length) {
+        var downloadText = [];
+        if (dataFilter.addedAfter !== undefined) {
+            downloadText.push('after [' + dataFilter.addedAfter + ']');
+        }
+        if (dataFilter.addedBefore !== undefined) {
+            downloadText.push('before [' + dataFilter.addedBefore + ']');
+        }
+        appendDownloadLink(dataFilter, ' or save all records added ' + downloadText.join(' and ') + ' as ');
+    }
+
+    download.appendChild(document.createElement("span"))
+        .textContent = '.';
+
 };
 
 var updateTableHeader = function (dataFilter) {
@@ -129,16 +158,16 @@ var renderOccurrences = function (resp, selector) {
             renderOccurrenceItems(occurrences, resp);
 
             var names = resp.items.reduce(function (agg, item) {
-              if (item.taxon) {
-                agg = agg.concat(util.lastNameFromPath(item.taxon));
-              }
-              return agg;
+                if (item.taxon) {
+                    agg = agg.concat(util.lastNameFromPath(item.taxon));
+                }
+                return agg;
             }, []);
 
             setOccurrencesStatus('linking to eol pages...');
             taxon.eolPageIdsFor(names, function (namesAndIds) {
-              util.addHyperlinksForNames(namesAndIds);
-                            setOccurrencesStatus("ready");
+                util.addHyperlinksForNames(namesAndIds);
+                setOccurrencesStatus("ready");
             });
 
             updateTableHeader(selector.getDataFilter());
@@ -231,7 +260,7 @@ occurrences.select = function (selector) {
     }
 
 
-    var addButtonListeners = function(buttonConfig) {
+    var addButtonListeners = function (buttonConfig) {
         var notificationButton = document.querySelector(buttonConfig.buttonQuery);
         if (notificationButton) {
             notificationButton.addEventListener('click', function (event) {
