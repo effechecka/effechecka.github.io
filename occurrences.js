@@ -234,9 +234,9 @@ occurrences.select = function (selector) {
         subscribeButton.addEventListener('click', function (event) {
 
             function subscribe(inputSelector, prefix) {
-                var emailInput = document.querySelector(inputSelector);
-                if (emailInput && !emailInput.validity.typeMismatch) {
-                    var emailAddress = emailInput.value;
+                var subscriptionInput = document.querySelector(inputSelector);
+                if (subscriptionInput && !subscriptionInput.validity.typeMismatch && subscriptionInput.value.length > 0) {
+                    var emailAddress = subscriptionInput.value;
                     var dataFilter = selector.getDataFilter();
                     dataFilter['subscriber'] = prefix + emailAddress;
                     var subscribeUrl = util.createRequestURL(dataFilter, 'subscribe');
