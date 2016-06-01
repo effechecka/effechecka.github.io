@@ -13,21 +13,14 @@
     <div id="traitFilter"></div>
 
     <div id="traitEditor">
-        <select id="traitName">
-            <option value="bodyMass">body mass</option>
-            <option value="eventDate">event date</option>
-            <option value="source">source</option>
-        </select><select id="traitOperator">
-        <option value="&lt">&lt</option>
-        <option value="&gt">&gt</option>
-        <option value="==">==</option>
-    </select>
+        <select id="traitName"></select>
+        <select id="traitOperator">
+            <option value="&lt">&lt</option>
+            <option value="&gt">&gt</option>
+            <option value="==">==</option>
+        </select>
         <input id="traitValue" placeholder="enter trait value" autocomplete="off"/>
         <select id="traitUnit">
-            <option value="g">g</option>
-            <option value="kg">kg</option>
-            <option value="string">no unit</option>
-            <option value="datetime">date/time</option>
         </select>
         <button id="addTraitSelector" title="add trait selector">+</button>
         <a href="https://github.com/jhpoelen/effechecka/wiki/About#trait-selector" target="_blank">?</a>

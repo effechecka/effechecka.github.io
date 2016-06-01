@@ -14,12 +14,16 @@
 <p>*A working prototype. Name is derived from "even checken," Dutch for "let's have a look."</p>
 
 <p>The purpose of <a href="https://github.com/jhpoelen/effechecka">Effechecka</a> is to create, save, export and follow
-    checklists given specific geospatial, taxonomic and trait constraints using data sources including, but not limited to,
+    checklists given specific geospatial, taxonomic and trait constraints using data sources including, but not limited
+    to,
     <a href="http://gbif.org">GBIF</a>, <a href="https://idigbio.org">iDigBio</a> and <a
-      href="http://eol.org/traitbank">EOL TraitBank</a>. Example checklists include <a target="_blank" href="?limit=20&taxonSelector=Plantae%2CAnimalia%2CFungi%2CInsecta&traitSelector=&wktString=POLYGON ((-122.4330997467041 37.71340528823683%2C -122.4312114715576 37.716189094052226%2C -122.42872238159178 37.715849611138026%2C -122.42734909057616 37.71435586783596%2C -122.42408752441405 37.72318209600067%2C -122.42211341857909 37.72392888243679%2C -122.41327285766602 37.72331787591273%2C -122.4111270904541 37.7192443702799%2C -122.40820884704588 37.7192443702799%2C -122.4100112915039 37.716324886782324%2C -122.41464614868164 37.715917507845305%2C -122.41730690002441 37.71320159102185%2C -122.4228000640869 37.71394847807249%2C -122.42305755615234 37.71034977121454%2C -122.4330997467041 37.71340528823683))">animals, insects, plants and fungi of McLaren Park in San Francisco</a>, <a href="?limit=20&taxonSelector=Aves%2CMammalia&traitSelector=bodyMass < 50 g&wktString=ENVELOPE(-122.78320312499999%2C-121.75048828124999%2C38.1777509666256%2C37.13404537126446)"
+            href="http://eol.org/traitbank">EOL TraitBank</a>. Example checklists include <a target="_blank"
+                                                                                             href="?limit=20&taxonSelector=Plantae%2CAnimalia%2CFungi%2CInsecta&traitSelector=&wktString=POLYGON ((-122.4330997467041 37.71340528823683%2C -122.4312114715576 37.716189094052226%2C -122.42872238159178 37.715849611138026%2C -122.42734909057616 37.71435586783596%2C -122.42408752441405 37.72318209600067%2C -122.42211341857909 37.72392888243679%2C -122.41327285766602 37.72331787591273%2C -122.4111270904541 37.7192443702799%2C -122.40820884704588 37.7192443702799%2C -122.4100112915039 37.716324886782324%2C -122.41464614868164 37.715917507845305%2C -122.41730690002441 37.71320159102185%2C -122.4228000640869 37.71394847807249%2C -122.42305755615234 37.71034977121454%2C -122.4330997467041 37.71340528823683))">animals,
+        insects, plants and fungi of McLaren Park in San Francisco</a>, <a
+            href="?limit=20&taxonSelector=Aves%2CMammalia&traitSelector=bodyMass < 50 g&wktString=ENVELOPE(-122.78320312499999%2C-121.75048828124999%2C38.1777509666256%2C37.13404537126446)"
             target="_blank">small birds and mammals of the San Francisco Bay Area</a> and <a
             href="?limit=20&taxonSelector=Elasmobranchii&traitSelector=bodyMass > 10 kg&wktString=ENVELOPE(-97.822265625%2C-80.595703125%2C31.05293398570514%2C18.312810846425442)"
-            target="_blank">big sharks of the Gulf of Mexico</a>. <p>Visit our <a href="https://github.com/jhpoelen/effechecka/wiki/About#introduction" target="_blank">wiki</a> for more information.</p>
+            target="_blank">big sharks of the Gulf of Mexico</a>.
 
 
 <div id="effechecka-selector"></div>
@@ -30,6 +34,14 @@
 
 <p>Want to know more? Please open <a href="https://github.com/jhpoelen/effechecka/issues/new">an issue</a> or yell really loudly. This project is supported by the <a href="http://eol.org">Encyclopedia of Life</a> and (partly) runs on <a
         href="https://idigbio.org">iDigBio</a> servers.</p>
+
 <script src="static/effechecka.js"></script>
+<script>
+    window.addEventListener('load', function () {
+        effechecka.init({traits: [
+            { name: 'body mass', value: 'bodyMass', units: [{ name: 'g', value: 'g'}, {name: 'kg', value: 'kg'}]}
+        ]});
+    });
+</script>
 </body>
 </html>

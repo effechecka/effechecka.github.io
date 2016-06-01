@@ -78,7 +78,14 @@ var updateGeospatialSelector = function (selectedAreas) {
     return needsUpdate;
 };
 
-selectors.createSelectors = function () {
+selectors.createSelectors = function (config) {
+
+    var config = config || { traits: [
+        {value: 'bodyMass', name: 'body mass', units: [
+            { name: 'g', value: 'g'},
+            { name: 'kg', value: 'kg'}
+        ]}
+    ]};
     var ee = new EventEmitter();
 
     var addTaxonFilterElement = function (taxonName) {
@@ -190,6 +197,30 @@ selectors.createSelectors = function () {
     taxonFilterNames.forEach(function (taxonName) {
         addTaxonFilterElement(taxonName);
     });
+
+    var appendOption = function (elem, option) {
+        var optionElem = elem.appendChild(document.createElement('option'));
+        optionElem.setAttribute('value', option.value);
+        optionElem.textContent = option.name;
+    }
+
+    config.traits.forEach(function (trait) {
+        appendOption(document.querySelector('#traitName'), trait);
+    });
+
+    var unitsUniq = config.traits.reduce(function (units, trait) {
+        if (trait.units !== undefined) {
+            trait.units.forEach(function (unit) {
+                units[unit.name] = unit.value;
+            });
+        }
+        return units;
+    }, {});
+
+    Object.keys(unitsUniq).forEach(function (unitKey) {
+        appendOption(document.querySelector('#traitUnit'), { name: unitKey, value: unitsUniq[unitKey] });
+    });
+
 
     var traitFilters = dataFilter.traitSelector.split(/[|,]/).filter(function (name) {
         return name.length > 0;

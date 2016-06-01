@@ -7,12 +7,12 @@ var util = require('./util.js');
 var effechecka = {};
 module.exports = effechecka;
 
-var init = function () {
+effechecka.init = function (config) {
     selectors.addTo(document.querySelector('#effechecka-selector'));
     checklist.addTo(document.querySelector('#effechecka-checklist'));
     occurrences.addTo(document.querySelector('#effechecka-occurrences'));
 
-    var selector = selectors.createSelectors();
+    var selector = selectors.createSelectors(config);
 
     if (document.querySelector('#effechecka-checklist')) {
         checklist.select(selector);
@@ -74,9 +74,6 @@ var init = function () {
     initFeed();
 };
 
-window.addEventListener('load', function () {
-    init();
-});
 
 window.addEventListener('popstate', function (event) {
     ['#effechecka-selector', '#effechecka-checklist', '#effechecka-occurrences']
