@@ -136,9 +136,9 @@ selectors.createSelectors = function () {
 
     var map = L.map('map', {scrollWheelZoom: false});
     selectors.map = map;
-    var tileUrlTemplate = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
-    L.tileLayer(tileUrlTemplate, {
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
+        noWrap: true,
         attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
