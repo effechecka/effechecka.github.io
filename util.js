@@ -87,10 +87,10 @@ util.capitalize = function (taxonName) {
 
 var requestHost = function () {
     return 'apihack-c18.idigbio.org';
-}
+};
 
-util.createRequestURL = function (dataFilter, endpoint) {
-    var queryParams = Object.keys(dataFilter)
+util.createQuery = function (dataFilter) {
+    return Object.keys(dataFilter)
         .reduce(function (accum, key) {
             var filterValue = dataFilter[key];
             var queryPart = "";
@@ -103,7 +103,10 @@ util.createRequestURL = function (dataFilter, endpoint) {
             }
             return accum;
         }, []).join('&');
-    return 'http://' + requestHost() + '/' + endpoint + '?' + queryParams;
+};
+
+util.createRequestURL = function (dataFilter, endpoint) {
+    return 'http://' + requestHost() + '/' + endpoint + '?' + util.createQuery(dataFilter);
 };
 
 util.quoteString = function (str) {

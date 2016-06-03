@@ -121,7 +121,18 @@ var updateDownloadURL = function (dataFilter) {
     }
 
     download.appendChild(document.createElement("span"))
-        .textContent = '.';
+        .textContent = '. View ';
+
+    var query = util.createQuery(dataFilter);
+    var checklistRef = download.appendChild(document.createElement("a"));
+    checklistRef.setAttribute('href', 'http://effechecka.org?' + query);
+    checklistRef.setAttribute('target', '_blank');
+    checklistRef.setAttribute('title', 'view or generate associated taxonomic checklist');
+    checklistRef.textContent = 'associated checklist';
+
+    download.appendChild(document.createElement("span"))
+        .textContent = '. ';
+
 
 };
 
@@ -259,8 +270,9 @@ occurrences.select = function (selector) {
                     req.send(null);
                 }
             }
-            subscribe('#effechecka-email','mailto:');
-            subscribe('#effechecka-webhook','');
+
+            subscribe('#effechecka-email', 'mailto:');
+            subscribe('#effechecka-webhook', '');
         }, false);
     }
 
