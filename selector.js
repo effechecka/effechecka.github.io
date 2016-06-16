@@ -175,12 +175,14 @@ selectors.createSelectors = function (config) {
     map.on('draw:created', function (e) {
         selectedAreas.addLayer(e.layer);
         if (updateGeospatialSelector(selectedAreas)) {
+            map.fitBounds(selectedAreas.getBounds().pad(0.1));
             ee.emit('update');
         }
     });
 
     map.on('draw:edited draw:deleted', function (e) {
         if (updateGeospatialSelector(selectedAreas)) {
+            map.fitBounds(selectedAreas.getBounds().pad(0.1));
             ee.emit('update');
         }
     });
