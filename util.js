@@ -86,7 +86,7 @@ util.capitalize = function (taxonName) {
 };
 
 var requestHost = function () {
-    return 'apihack-c18.idigbio.org';
+    return 'api.effechecka.org';
 };
 
 util.createQuery = function (dataFilter) {
