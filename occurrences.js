@@ -92,10 +92,11 @@ var updateDownloadURL = function (dataFilter) {
         download.appendChild(document.createElement("span"))
             .textContent = text;
 
-        var url = util.createRequestURL(dataFilter, 'occurrences.csv');
-        var csvRef = download.appendChild(document.createElement("a"));
-        csvRef.setAttribute('href', url);
-        csvRef.textContent = 'csv';
+        var url = util.createRequestURL(dataFilter, 'occurrences.tsv');
+        var tsvRef = download.appendChild(document.createElement("a"));
+        tsvRef.setAttribute('href', url);
+        tsvRef.setAttribute('title', 'download all results as tsv (tab separated values) file');
+        tsvRef.textContent = 'tsv';
     };
 
     var noAddedKeys = Object.keys(dataFilter).filter(function (key) {
