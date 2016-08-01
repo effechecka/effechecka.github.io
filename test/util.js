@@ -7,8 +7,8 @@ var wkt = require('terraformer-wkt-parser');
 test('create request url', function(t) {
   t.plan(2);
 
-  t.equal(u.createRequestURL({ limit: 10 }, 'endpoint'), 'http://apihack-c18.idigbio.org/endpoint?limit=10');
-  t.equal(u.createRequestURL({ limit: 10, foo: 'bar' }, 'endpoint'), 'http://apihack-c18.idigbio.org/endpoint?limit=10&foo=bar');
+  t.equal(u.createRequestURL({ limit: 10 }, 'endpoint'), 'http://api.effechecka.org/endpoint?limit=10');
+  t.equal(u.createRequestURL({ limit: 10, foo: 'bar' }, 'endpoint'), 'http://api.effechecka.org/endpoint?limit=10&foo=bar');
 });
 
 test('source,id to url', function(t) {

@@ -55,13 +55,13 @@ var createChecklistURL = function (dataFilter) {
     return util.createRequestURL(dataFilter, 'checklist');
 };
 
-var addCSVDownloadLink = function (filename, label, csvString) {
+var addTSVDownloadLink = function (filename, label, tsvString) {
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span")).textContent = ' or as ';
-    var csvRef = download.appendChild(document.createElement("a"));
-    csvRef.setAttribute('href', encodeURI('data:text/csv;charset=utf-8,' + csvString));
-    csvRef.setAttribute('download', filename)
-    csvRef.textContent = label;
+    var tsvRef = download.appendChild(document.createElement("a"));
+    tsvRef.setAttribute('href', encodeURI('data:text/tab-separated-values;charset=utf-8,' + tsvString));
+    tsvRef.setAttribute('download', filename)
+    tsvRef.textContent = label;
 }
 
 var quoteString = function (str) {
@@ -69,14 +69,14 @@ var quoteString = function (str) {
 }
 
 var addChecklistDownloadLink = function (items) {
-    var csvString = items.reduce(function (agg, item) {
+    var tsvString = items.reduce(function (agg, item) {
         if (item.taxon && item.recordcount) {
-            var taxonName = quoteString(util.lastNameFromPath(item.taxon));
-            agg = agg.concat([taxonName, quoteString(item.taxon), item.recordcount].join(','));
+            var taxonName = util.lastNameFromPath(item.taxon);
+            agg = agg.concat([taxonName, item.taxon, item.recordcount].join('\t'));
         }
         return agg;
     }, ['taxon name,taxon path,record count']).join('\n');
-    addCSVDownloadLink('checklist.csv', 'csv', csvString);
+    addTSVDownloadLink('checklist.tsv', 'tsv', tsvString);
 }
 
 var onNameAndPageIds = function (nameAndPageIds) {
@@ -90,7 +90,7 @@ var addDownloadAsEOLIdsLink = function (nameAndPageIds) {
         return nameAndPageId.id
     });
     var maxCollectionItems = 10;
-    addCSVDownloadLink('eolpageids.csv', 'eol page ids', pageIds.join('\n'));
+    addTSVDownloadLink('eolpageids.tsv', 'eol page ids', pageIds.join('\n'));
     var download = document.querySelector('#download');
     download.setAttribute('data-name-and-page-ids', JSON.stringify(nameAndPageIds));
     download.appendChild(document.createElement("span")).textContent = ' or ';
