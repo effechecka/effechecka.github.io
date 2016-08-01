@@ -75,7 +75,7 @@ var addChecklistDownloadLink = function (items) {
             agg = agg.concat([taxonName, item.taxon, item.recordcount].join('\t'));
         }
         return agg;
-    }, ['taxon name,taxon path,record count']).join('\n');
+    }, ['taxonName\ttaxonPath\trecord count']).join('\n');
     addTSVDownloadLink('checklist.tsv', 'tsv', tsvString);
 }
 
