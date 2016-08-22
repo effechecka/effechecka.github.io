@@ -244,9 +244,7 @@ util.urlForOccurrence = function (occurrence) {
     var sourceValue = sourceMap[occurrence.source];
     var idUrl;
     if (sourceValue === undefined) {
-        var subject = 'no link for fresh data source [' + occurrence.source + ']';
-        var body = 'please add a url mapper for source [' + occurrence.source + ']';
-        idUrl = "http://github.com/gimmefreshdata/freshdata/issues/new?title=" + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        idUrl = 'http://archive.effechecka.org/job/' + encodeURIComponent(occurrence.source);
     } else if (sourceValue.prefix.length == 0 && sourceValue.suffix.length == 0) {
         idUrl = occurrence.id;
     } else {
