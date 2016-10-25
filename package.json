@@ -8,13 +8,14 @@
     "extend": "^3.0.0",
     "globi-data": "^0.0.43",
     "leaflet": "^0.7.7",
-    "leaflet.draw": "^0.3.0",
+    "leaflet-draw": "^0.3.0",
     "query-string": "^2.3.0",
     "taxon": "0.0.13",
     "terraformer-wkt-parser": "^1.1.0",
-    "xhr": "^2.1.0"
+    "xhr": "^2.2.0"
   },
   "devDependencies": {
+    "brfs": "^1.4.3",
     "browserify": "^8.1.1",
     "tape": "^3.0.3",
     "watchify": "^2.2.1"
