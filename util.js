@@ -253,16 +253,6 @@ util.urlForOccurrence = function (occurrence) {
     return idUrl;
 };
 
-util.enableFeed = function (callback, dataFilter) {
-    var feed = new WebSocket('ws://' + requestHost() + ":8888/feed");
-    feed.onmessage = function (event) {
-        var feedData = JSON.parse(event.data);
-        if (dataFilter === undefined || util.deepEqualIgnoreEmpty(dataFilter, feedData)) {
-            callback(feedData);
-        }
-    };
-};
-
 util.deepEqualIgnoreEmpty = function (a, b) {
     var removeEmptyKeys = function (obj) {
         return Object.keys(obj).filter(function (key) {

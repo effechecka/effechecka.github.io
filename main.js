@@ -48,30 +48,6 @@ effechecka.init = function (config) {
 
     selector.init();
 
-    function initFeed() {
-        if (document.getElementById('occurrencesStatus')) {
-            util.enableFeed(function (monitorStatus) {
-                var dataFilter = selector.getDataFilter();
-                var selectorWebContext = { taxonSelector: dataFilter['taxonSelector'].replace(/,/g, "|"),
-                    wktString: dataFilter['wktString'],
-                    traitSelector: dataFilter['traitSelector'].replace(/,/g, "|")};
-
-                var selectorFeedContext = monitorStatus.selector;
-
-                if (util.deepEqualIgnoreEmpty(selectorWebContext, selectorFeedContext)) {
-                    var feedStatus = document.getElementById('occurrencesStatus');
-                    if (feedStatus) {
-                        if (monitorStatus.status === 'ready') {
-                            selector.emit(monitorStatus.status);
-                        }
-                        feedStatus.textContent = monitorStatus.status + ' (' + monitorStatus.percentComplete + '%)';
-                    }
-                }
-            });
-        }
-    }
-
-    initFeed();
 };
 
 
