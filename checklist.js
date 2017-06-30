@@ -1,6 +1,7 @@
 var fs = require('fs');
 var util = require('./util.js');
 var taxon = require('taxon');
+var extend = require('extend');
 
 var checklist = {};
 module.exports = checklist;
@@ -75,7 +76,7 @@ var addChecklistDownloadLink = function (items) {
             agg = agg.concat([taxonName, item.taxon, item.recordcount].join('\t'));
         }
         return agg;
-    }, ['taxonName\ttaxonPath\trecord count']).join('\n');
+    }, ['taxonName\ttaxonPath\trecordCount']).join('\n');
     addTSVDownloadLink('checklist.tsv', 'tsv', tsvString);
 }
 
@@ -167,12 +168,21 @@ var updateDownloadURL = function (selector) {
     util.removeChildren("#download");
 
     var dataFilter = selector.getDataFilter();
-    dataFilter.limit = 1024 * 4;
+    delete dataFilter.limit;
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
-        .textContent = 'save up to [' + dataFilter.limit + '] checklist items as ';
+        .textContent = 'save all checklist items as ';
+    var url = util.createRequestURL(dataFilter, 'checklist.tsv'); 
+    var jsonRef = download.appendChild(document.createElement("a"));
+    jsonRef.setAttribute('href', url);
+    jsonRef.textContent = 'tsv';
 
+    download.appendChild(document.createElement("span"))
+        .textContent = ' or save up to [' + dataFilter.limit + '] checklist items as ';
+    
+    dataFilter.limit = 1024 * 4;
+    
     var url = createChecklistURL(dataFilter);
     var jsonRef = download.appendChild(document.createElement("a"));
     jsonRef.setAttribute('href', url);
@@ -195,7 +205,7 @@ var updateDownloadURL = function (selector) {
                             }
                             header.textContent = headerText;
                         }
-                        addChecklistDownloadLink(resp.items);
+                        //addChecklistDownloadLink(resp.items);
 
                         var names = resp.items.reduce(function (agg, item) {
                             if (item.taxon) {
