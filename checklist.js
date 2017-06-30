@@ -172,16 +172,16 @@ var updateDownloadURL = function (selector) {
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
-        .textContent = 'save all checklist items as ';
+        .textContent = 'save all as ';
     var url = util.createRequestURL(dataFilter, 'checklist.tsv'); 
     var jsonRef = download.appendChild(document.createElement("a"));
     jsonRef.setAttribute('href', url);
     jsonRef.textContent = 'tsv';
 
+    dataFilter.limit = 1024 * 4;
     download.appendChild(document.createElement("span"))
         .textContent = ' or save up to [' + dataFilter.limit + '] checklist items as ';
     
-    dataFilter.limit = 1024 * 4;
     
     var url = createChecklistURL(dataFilter);
     var jsonRef = download.appendChild(document.createElement("a"));
