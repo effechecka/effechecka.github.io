@@ -199,7 +199,7 @@ var updateDownloadURL = function (selector) {
                     if (resp.items) {
                         var header = document.querySelector('#checklistHeader');
                         if (header) {
-                            var headerText = resp.items.length + ' checklist items';
+                            var headerText = 'checklist items';
                             if (resp.items.length > 20) {
                                 headerText = headerText.concat(' (first 20 shown)');
                             }
