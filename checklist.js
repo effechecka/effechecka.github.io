@@ -178,7 +178,7 @@ var updateDownloadURL = function (selector) {
     jsonRef.setAttribute('href', url);
     jsonRef.textContent = 'tsv';
 
-    dataFilter.limit = 1024 * 4;
+    dataFilter.limit = 20;
     download.appendChild(document.createElement("span"))
         .textContent = ' or save up to [' + dataFilter.limit + '] checklist items as ';
     

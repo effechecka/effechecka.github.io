@@ -25,8 +25,7 @@ test('source,id to url', function(t) {
   t.equal(u.urlForOccurrence(idigbio), idigbioExpected);
 
   var unknown = { source: 'something', id: 'other' };
-  var expectedOpenIssueLink = 'http://github.com/gimmefreshdata/freshdata/issues/new?title=no%20link%20for%20fresh%20data%20source%20%5Bsomething%5D&body=please%20add%20a%20url%20mapper%20for%20source%20%5Bsomething%5D';
-  t.equal(u.urlForOccurrence(unknown), expectedOpenIssueLink);
+  t.equal(u.urlForOccurrence(unknown), 'http://archive.effechecka.org/job/something');
 });
 
 test('extract most specific taxon name from ordered path', function (t) {
