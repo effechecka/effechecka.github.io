@@ -178,7 +178,7 @@ var updateDownloadURL = function (selector) {
     jsonRef.setAttribute('href', url);
     jsonRef.textContent = 'tsv';
 
-    document.appendChild(document.createElement("span")).textContent = ', view associated ';
+    download.appendChild(document.createElement("span")).textContent = ', view associated ';
 
     var occurrenceRef = download.appendChild(document.createElement("a"));
     occurrenceRef.setAttribute('href', 'http://gimmefreshdata.github.io/?' + util.createQuery(dataFilter));
