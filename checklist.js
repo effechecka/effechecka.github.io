@@ -172,15 +172,22 @@ var updateDownloadURL = function (selector) {
 
     var download = document.querySelector('#download');
     download.appendChild(document.createElement("span"))
-        .textContent = 'save all as ';
+        .textContent = 'Save all as ';
     var url = util.createRequestURL(dataFilter, 'checklist.tsv'); 
     var jsonRef = download.appendChild(document.createElement("a"));
     jsonRef.setAttribute('href', url);
     jsonRef.textContent = 'tsv';
 
+    var occurrenceRef = download.appendChild(document.createElement("a"));
+    occurrenceRef.setAttribute('href', 'http://gimmefreshdata.github.io/?' + query);
+    occurrenceRef.setAttribute('target', '_blank');
+    occurrenceRef.setAttribute('title', 'view or request associated occurrences');
+    occurrenceRef.textContent = ', see associated occurrences';
+
+
     dataFilter.limit = 20;
     download.appendChild(document.createElement("span"))
-        .textContent = ' or save up to [' + dataFilter.limit + '] checklist items as ';
+        .textContent = ', or save up to [' + dataFilter.limit + '] checklist items as ';
     
     
     var url = createChecklistURL(dataFilter);
