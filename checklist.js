@@ -179,7 +179,7 @@ var updateDownloadURL = function (selector) {
     jsonRef.textContent = 'tsv';
 
     var occurrenceRef = download.appendChild(document.createElement("a"));
-    occurrenceRef.setAttribute('href', 'http://gimmefreshdata.github.io/?' + query);
+    occurrenceRef.setAttribute('href', 'http://gimmefreshdata.github.io/?' + util.createQuery(dataFilter));
     occurrenceRef.setAttribute('target', '_blank');
     occurrenceRef.setAttribute('title', 'view or request associated occurrences. Note that occurrence queries do not support trait filters.');
     occurrenceRef.textContent = ', see associated occurrences';
