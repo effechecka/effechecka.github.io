@@ -173,7 +173,7 @@ util.requestSelected = function (url, selector, render, updateStatus) {
                     var resp = JSON.parse(req.responseText);
                     render(resp, selector);
                 } else {
-                    updateStatus('not ok. Received a [' + req.status + '] status with text [' + req.statusText + '] in response to [' + url + ']');
+                    updateStatus('not ok. Received a [' + req.status + '] status with text [' + req.statusText + '] and message [' + req.responseText + '] in response to [' + url + ']');
                 }
             }
         };
