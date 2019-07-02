@@ -7,8 +7,8 @@ var wkt = require('terraformer-wkt-parser');
 test('create request url', function(t) {
   t.plan(2);
 
-  t.equal(u.createRequestURL({ limit: 10 }, 'endpoint'), 'http://api.effechecka.org/endpoint?limit=10');
-  t.equal(u.createRequestURL({ limit: 10, foo: 'bar' }, 'endpoint'), 'http://api.effechecka.org/endpoint?limit=10&foo=bar');
+  t.equal(u.createRequestURL({ limit: 10 }, 'endpoint'), 'http://api.guoda.bio/endpoint?limit=10');
+  t.equal(u.createRequestURL({ limit: 10, foo: 'bar' }, 'endpoint'), 'http://api.guoda.bio/endpoint?limit=10&foo=bar');
 });
 
 test('source,id to url', function(t) {
@@ -25,7 +25,7 @@ test('source,id to url', function(t) {
   t.equal(u.urlForOccurrence(idigbio), idigbioExpected);
 
   var unknown = { source: 'something', id: 'other' };
-  t.equal(u.urlForOccurrence(unknown), 'http://archive.effechecka.org/job/something');
+  t.equal(u.urlForOccurrence(unknown), 'http://archive.guoda.bio/job/something');
 });
 
 test('extract most specific taxon name from ordered path', function (t) {
