@@ -86,7 +86,7 @@ util.capitalize = function (taxonName) {
 };
 
 var requestHost = function () {
-    return 'api.effechecka.org';
+    return 'api.guoda.bio';
 };
 
 util.createQuery = function (dataFilter) {
